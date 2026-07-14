@@ -1,0 +1,15 @@
+build/
+cmake-build-*/
+compile_commands.json
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+.DS_Store
+.env
+.env.*
+!.env.example
