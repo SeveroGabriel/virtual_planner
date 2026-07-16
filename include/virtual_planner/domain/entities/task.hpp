@@ -19,7 +19,7 @@ public:
         std::string description,
         Category category,
         Date date,
-        TimeSlot timeSlot,
+        TimeSlot time_slot,
         Priority priority,
         TaskStatus status
     );
@@ -32,7 +32,7 @@ public:
 
     [[nodiscard]] Date date() const;
 
-    [[nodiscard]] TimeSlot timeSlot() const;
+    [[nodiscard]] TimeSlot time_slot() const;
 
     [[nodiscard]] Priority priority() const;
 
@@ -44,7 +44,7 @@ public:
 
     void change_date(Date date);
 
-    void mark_as_pending();
+     void mark_as_pending();
     
     void mark_as_executed();
 
@@ -54,7 +54,7 @@ public:
 
     void mark_as_postponed();
 
-    void change_time_slot(TimeSlot timeSlot);
+    void change_time_slot(TimeSlot time_slot);
 
     void change_priority(Priority priority);
 
