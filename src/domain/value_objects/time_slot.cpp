@@ -1,6 +1,6 @@
 #include "virtual_planner/domain/value_objects/time_slot.hpp"
-
 #include <stdexcept>
+
 
 namespace virtual_planner::domain {
 
@@ -14,22 +14,22 @@ TimeSlot::TimeSlot(Minutes start, Minutes end)
     }
 }
 
-Minutes TimeSlot::start() const
+TimeSlot::Minutes TimeSlot::start() const
 {
     return start_;
 }
 
-Minutes TimeSlot::end() const
+TimeSlot::Minutes TimeSlot::end() const
 {
     return end_;
 }
 
-Minutes TimeSlot::duration() const
+TimeSlot::Minutes TimeSlot::duration() const
 {
     return end_ - start_;
 }
 
-bool TimeSlot::contains(Minutes time) const
+bool TimeSlot::contains(TimeSlot::Minutes time) const
 {
    return time >= start_ && time < end_;
 }
