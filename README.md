@@ -147,6 +147,31 @@ O teste de integração usa `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`
 └── CMakeLists.txt
 ```
 
+## Arquitetura Atual
+
+
+Hoje o projeto está organizado como uma base modular simples em C++20. A aplicação ainda não possui regras reais de negócio, entidades de domínio, schema SQL ou repositórios concretos de produto. A arquitetura atual define os limites entre camadas, os contratos principais e o adapter opcional de PostgreSQL.
+
+Diagrama interativo gerado com Archify: [`docs/diagrams/current-architecture.html`](docs/diagrams/current-architecture.html). O JSON fonte do diagrama está em [`docs/diagrams/current-architecture.architecture.json`](docs/diagrams/current-architecture.architecture.json).
+
+
+![alt text](docs/diagrams/virtual-planner---arquitetura-atual.webp)
+
+- `main.cpp`: raiz de composição. Carrega a configuração geral, decide se PostgreSQL será usado em runtime e conecta implementações concretas.
+- `core`: primitivas centrais, como `AppConfig` e perfil de execução.
+- `shared`: erros e tipos transversais que não pertencem a uma camada específica.
+- `domain`: reservado para entidades e regras de negócio futuras. Ainda não contém modelo de produto.
+- `application`: reservado para casos de uso futuros. Deve coordenar regras por meio de contratos, sem depender de infraestrutura concreta.
+- `interfaces`: portas estáveis para contratos como configuração, cache, eventos, logging, repositórios e serialização.
+- `persistence`: abstrações vendor-neutral de persistência, como `Database` e `Transaction`.
+- `infrastructure/config`: adapter de configuração baseado em variáveis de ambiente.
+- `infrastructure/postgres`: adapter concreto PostgreSQL, compilado apenas quando `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
+
+O fluxo padrão de execução é simples: `main.cpp` usa `EnvironmentConfigLoader` para montar `AppConfig`. Se `VP_USE_POSTGRES=true` e o binário foi compilado com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`, `main.cpp` cria `PostgresConfig`, instancia `PostgresDatabase` e chama `connect()`.
+
+As dependências devem continuar apontando para dentro. `domain`, `application`, `core` e as abstrações em `persistence` não incluem `libpqxx` nem detalhes de PostgreSQL. O driver concreto fica restrito a `infrastructure/postgres`.
+
+
 ## Arquitetura De Persistência
 
 - `persistence::Database`: abstração vendor-neutral para ciclo de vida de persistência.
