@@ -1,0 +1,81 @@
+#pragma once
+
+#include <cstdint>
+#include <string>
+
+#include "virtual_planner/domain/value_objects/date.hpp"
+#include "virtual_planner/domain/enums/category.hpp"
+#include "virtual_planner/domain/enums/priority.hpp"
+#include "virtual_planner/domain/enums/task_status.hpp"
+#include "virtual_planner/domain/value_objects/time_slot.hpp"
+
+namespace virtual_planner::domain {
+
+class Task
+{
+public:
+    Task(
+        std::uint64_t id,
+        std::string description,
+        Category category,
+        Date date,
+        TimeSlot timeSlot,
+        Priority priority,
+        TaskStatus status
+    );
+
+    [[nodiscard]] std::uint64_t id() const;
+
+    [[nodiscard]] const std::string& description() const;
+
+    [[nodiscard]] Category category() const;
+
+    [[nodiscard]] Date date() const;
+
+    [[nodiscard]] TimeSlot timeSlot() const;
+
+    [[nodiscard]] Priority priority() const;
+
+    [[nodiscard]] TaskStatus status() const;
+
+    void update_description(std::string description);
+
+    void change_category(Category category);
+
+    void change_date(Date date);
+
+    void mark_as_pending();
+    
+    void mark_as_executed();
+
+    void mark_as_partially_executed();
+
+    void mark_as_cancelled();
+
+    void mark_as_postponed();
+
+    void change_time_slot(TimeSlot timeSlot);
+
+    void change_priority(Priority priority);
+
+private:
+    std::uint64_t id_;
+
+    std::string description_;
+
+    Category category_;
+
+    Date date_;
+
+    TimeSlot time_slot_;
+
+    Priority priority_;
+
+    TaskStatus status_;
+};
+
+} // namespace virtual_planner::domain
+
+
+
+
