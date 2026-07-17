@@ -15,6 +15,6 @@ enum class GoalStatus
 
 std::string to_string(GoalStatus value);
 
-GoalStatus goalStatus_from_string(std::string_view value);
+GoalStatus goal_status_from_string(std::string_view value);
 
 } // namespace virtual_planner::domain

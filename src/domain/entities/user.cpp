@@ -27,12 +27,12 @@ User::User(
             "User email cannot be empty."
         );
     }
-    
+
     if (email_.find('@') == std::string::npos)
     {
-    throw std::invalid_argument(
-        "Invalid email."
-    );
+        throw std::invalid_argument(
+            "Invalid email."
+        );
     }
 }
 
@@ -71,13 +71,14 @@ void User::update_email(std::string email)
             "User email cannot be empty."
         );
     }
- 
-    if (email_.find('@') == std::string::npos)
-{
-    throw std::invalid_argument(
-        "Invalid email."
-    );
-}
+
+    if (email.find('@') == std::string::npos)
+    {
+        throw std::invalid_argument(
+            "Invalid email."
+        );
+    }
+
     email_ = std::move(email);
 }
 

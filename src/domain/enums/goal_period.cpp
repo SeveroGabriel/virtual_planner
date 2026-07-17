@@ -4,9 +4,9 @@
 
 namespace virtual_planner::domain {
 
-std::string to_string(GoalPeriod goalPeriod)
+std::string to_string(GoalPeriod goal_period)
 {
-    switch (goalPeriod)
+    switch (goal_period)
     {
        case GoalPeriod::Weekly:
             return "Weekly";
@@ -21,7 +21,7 @@ std::string to_string(GoalPeriod goalPeriod)
     throw std::invalid_argument("Invalid GoalPeriod");
 }
 
-GoalPeriod goalPeriod_from_string(std::string_view value)
+GoalPeriod goal_period_from_string(std::string_view value)
 {
     if (value == "Weekly") return GoalPeriod::Weekly;
     if (value == "Monthly") return GoalPeriod::Monthly;

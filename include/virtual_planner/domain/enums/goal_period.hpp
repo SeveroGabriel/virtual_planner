@@ -14,6 +14,6 @@ enum class GoalPeriod
 
 std::string to_string(GoalPeriod value);
 
-GoalPeriod goalPeriod_from_string(std::string_view value);
+GoalPeriod goal_period_from_string(std::string_view value);
 
 } // namespace virtual_planner::domain

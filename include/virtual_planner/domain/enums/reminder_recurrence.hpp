@@ -15,6 +15,6 @@ enum class ReminderRecurrence
 
 std::string to_string(ReminderRecurrence value);
 
-ReminderRecurrence reminderRecurrence_from_string(std::string_view value);
+ReminderRecurrence reminder_recurrence_from_string(std::string_view value);
 
 } // namespace virtual_planner::domain

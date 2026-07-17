@@ -4,9 +4,9 @@
 
 namespace virtual_planner::domain {
 
-std::string to_string(TaskStatus taskStatus)
+std::string to_string(TaskStatus task_status)
 {
-    switch (taskStatus)
+    switch (task_status)
     {
         case TaskStatus::Pending:
             return "Pending";
@@ -15,21 +15,19 @@ std::string to_string(TaskStatus taskStatus)
             return "Executed";
 
         case TaskStatus::PartiallyExecuted:
-            return "Partially Executed";
+            return "PartiallyExecuted";
 
         case TaskStatus::Cancelled:
             return "Cancelled";
 
         case TaskStatus::Postponed:
             return "Postponed";
-    } 
-
-    {
-      throw std::invalid_argument("Invalid taskStatus");
     }
+
+    throw std::invalid_argument("Invalid TaskStatus.");
 }
 
-TaskStatus taskStatus_from_string(std::string_view value) 
+TaskStatus task_status_from_string(std::string_view value)
 {
     if (value == "Pending") return TaskStatus::Pending;
     if (value == "Executed") return TaskStatus::Executed;
@@ -37,8 +35,7 @@ TaskStatus taskStatus_from_string(std::string_view value)
     if (value == "Cancelled") return TaskStatus::Cancelled;
     if (value == "Postponed") return TaskStatus::Postponed;
 
-    throw std::invalid_argument("Invalid TaskStatus");
+    throw std::invalid_argument("Invalid TaskStatus.");
 }
 
-}  // namespace virtual_planner::domain
-           
+} // namespace virtual_planner::domain

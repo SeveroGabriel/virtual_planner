@@ -16,6 +16,6 @@ enum class TaskStatus
 
 std::string to_string(TaskStatus value);
 
-TaskStatus taskstatus_from_string(std::string_view value);
+TaskStatus task_status_from_string(std::string_view value);
 
 } // namespace virtual_planner::domain

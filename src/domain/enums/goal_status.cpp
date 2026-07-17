@@ -4,9 +4,9 @@
 
 namespace virtual_planner::domain {
 
-std::string to_string(GoalStatus goalStatus)
+std::string to_string(GoalStatus goal_status)
 {
-    switch (goalStatus)
+    switch (goal_status)
     {
         case GoalStatus::InProgress:
             return "In Progress";
@@ -24,7 +24,7 @@ std::string to_string(GoalStatus goalStatus)
     throw std::invalid_argument("Invalid GoalStatus");
 }
 
-GoalStatus goalStatus_from_string(std::string_view value)
+GoalStatus goal_status_from_string(std::string_view value)
 {
     if (value == "In Progress") return GoalStatus::InProgress;
     if (value == "Completed") return GoalStatus::Completed;

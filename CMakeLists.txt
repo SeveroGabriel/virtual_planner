@@ -24,6 +24,14 @@ add_library(virtual_planner_core
 
     # Core
     src/core/app_config.cpp
+    src/domain/enums/category.cpp
+    src/domain/enums/priority.cpp
+    src/domain/enums/task_status.cpp
+    src/domain/enums/goal_status.cpp
+    src/domain/enums/goal_period.cpp
+    src/domain/enums/reminder_recurrence.cpp
+    src/domain/enums/reminder_type.cpp
+    src/domain/enums/shift.cpp
 
     # Domain
     src/domain/entities/user.cpp

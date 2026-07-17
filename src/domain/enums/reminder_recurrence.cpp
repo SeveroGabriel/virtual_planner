@@ -24,7 +24,7 @@ std::string to_string(ReminderRecurrence recurrence)
     throw std::invalid_argument("Invalid ReminderRecurrence");
 }
 
-ReminderRecurrence reminderRecurrence_from_string(std::string_view value)
+ReminderRecurrence reminder_recurrence_from_string(std::string_view value)
 {
     if (value == "Once") return ReminderRecurrence::Once;
     if (value == "Daily") return ReminderRecurrence::Daily;

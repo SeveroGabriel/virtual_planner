@@ -4,12 +4,16 @@
 
 namespace virtual_planner::domain {
 
-std::string to_string(ReminderType reminderType)
+std::string to_string(ReminderType reminder_type)
 {
-    switch (reminderType)
+
+    switch (reminder_type)
     {
+        case ReminderType::Meeting:
+            return "Meeting";
+
         case ReminderType::PhoneCall:
-            return "Phone Call";
+            return "PhoneCall";
 
         case ReminderType::Shopping:
             return "Shopping";
@@ -27,15 +31,16 @@ std::string to_string(ReminderType reminderType)
     throw std::invalid_argument("Invalid ReminderType");
 }
 
-ReminderType reminderType_from_string(std::string_view value)
+ReminderType reminder_type_from_string(std::string_view value)
 {
+    if (value == "Meeting")   return ReminderType::Meeting;
     if (value == "PhoneCall") return ReminderType::PhoneCall;
-    if (value == "Shopping") return ReminderType::Shopping;
-    if (value == "Study") return ReminderType::Study;
-    if (value == "Exercise") return ReminderType::Exercise;
+    if (value == "Shopping")  return ReminderType::Shopping;
+    if (value == "Study")     return ReminderType::Study;
+    if (value == "Exercise")  return ReminderType::Exercise;
     if (value == "Assignment") return ReminderType::Assignment;
 
-    throw std::invalid_argument("Invalid ReminderType");
+    throw std::invalid_argument("Invalid ReminderType.");
 }
 
 }  // namespace virtual_planner::domain

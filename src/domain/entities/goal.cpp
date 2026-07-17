@@ -1,6 +1,7 @@
 #include "virtual_planner/domain/entities/goal.hpp"
 
 #include <utility>
+#include <stdexcept>
 
 namespace virtual_planner::domain {
 
@@ -17,6 +18,12 @@ Goal::Goal(
       status_(status),
       period_(period)
 {
+     if (description_.empty())
+    {
+        throw std::invalid_argument(
+            "Goal description cannot be empty."
+        );
+    }
 }
 
 std::uint64_t Goal::id() const
@@ -46,6 +53,13 @@ GoalPeriod Goal::period() const
 
 void Goal::update_description(std::string description)
 {
+    if (description.empty())
+    {
+        throw std::invalid_argument(
+            "Goal description cannot be empty."
+        );
+    }
+
     description_ = std::move(description);
 }
 

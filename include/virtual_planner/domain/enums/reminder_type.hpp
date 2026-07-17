@@ -17,6 +17,6 @@ enum class ReminderType
 
 std::string to_string(ReminderType value);
 
-ReminderType reminderType_from_string(std::string_view value);
+ReminderType reminder_type_from_string(std::string_view value);
 
 } // namespace virtual_planner::domain
