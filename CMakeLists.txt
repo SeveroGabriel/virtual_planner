@@ -21,11 +21,35 @@ function(virtual_planner_enable_warnings target_name)
 endfunction()
 
 add_library(virtual_planner_core
-  src/core/app_config.cpp
-  src/infrastructure/config/environment_config_loader.cpp
-  src/infrastructure/postgres/postgres_config.cpp
-  src/persistence/database.cpp
-  src/shared/errors.cpp
+
+    # Core
+    src/core/app_config.cpp
+    src/domain/enums/category.cpp
+    src/domain/enums/priority.cpp
+    src/domain/enums/task_status.cpp
+    src/domain/enums/goal_status.cpp
+    src/domain/enums/goal_period.cpp
+    src/domain/enums/reminder_recurrence.cpp
+    src/domain/enums/reminder_type.cpp
+    src/domain/enums/shift.cpp
+
+    # Domain
+    src/domain/entities/user.cpp
+    src/domain/entities/reminder.cpp
+    src/domain/value_objects/date.cpp
+    src/domain/entities/task.cpp
+    src/domain/entities/goal.cpp
+    src/domain/value_objects/time_slot.cpp
+
+    # Infrastructure
+    src/infrastructure/config/environment_config_loader.cpp
+    src/infrastructure/postgres/postgres_config.cpp
+
+    # Persistence
+    src/persistence/database.cpp
+
+    # Shared
+    src/shared/errors.cpp
 )
 
 target_include_directories(virtual_planner_core
