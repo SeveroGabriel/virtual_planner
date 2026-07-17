@@ -3,22 +3,22 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Virtual Planner - Arquitetura Atual",
-    "subtitle": "Base modular C++20 com nucleo vendor-neutral e adapter PostgreSQL opcional",
+    "subtitle": "Dominio inicial, persistencia vendor-neutral e adapter PostgreSQL opcional",
     "output": "current-architecture.html",
-    "viewBox": [1080, 700]
+    "viewBox": [1120, 720]
   },
   "components": [
-    { "id": "main", "type": "backend", "label": "main.cpp", "sublabel": "composition root", "pos": [40, 290], "size": [130, 60] },
-    { "id": "env", "type": "cloud", "label": "Env Config", "sublabel": "EnvironmentConfigLoader", "pos": [230, 290], "size": [150, 60] },
+    { "id": "main", "type": "backend", "label": "main.cpp", "sublabel": "composition root", "pos": [40, 300], "size": [130, 60] },
+    { "id": "env", "type": "cloud", "label": "Env Config", "sublabel": "EnvironmentConfigLoader", "pos": [230, 300], "size": [150, 60] },
     { "id": "core", "type": "backend", "label": "core", "sublabel": "AppConfig + profile", "pos": [440, 210], "size": [145, 60] },
-    { "id": "shared", "type": "cloud", "label": "shared", "sublabel": "base errors", "pos": [440, 330], "size": [145, 60] },
-    { "id": "domain", "type": "backend", "label": "domain", "sublabel": "future entities", "pos": [660, 90], "size": [150, 60] },
-    { "id": "application", "type": "backend", "label": "application", "sublabel": "future use cases", "pos": [660, 190], "size": [150, 60] },
-    { "id": "interfaces", "type": "messagebus", "label": "interfaces", "sublabel": "ports", "pos": [850, 140], "size": [150, 60] },
-    { "id": "persistence", "type": "database", "label": "persistence", "sublabel": "Database + Transaction", "pos": [850, 290], "size": [150, 60] },
-    { "id": "pgadapter", "type": "database", "label": "PostgreSQL Adapter", "sublabel": "PostgresDatabase", "pos": [660, 430], "size": [170, 60], "tag": "optional" },
-    { "id": "pqxx", "type": "external", "label": "libpqxx", "sublabel": "compiled with flag", "pos": [890, 430], "size": [130, 60] },
-    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "runtime database", "pos": [890, 550], "size": [130, 60] }
+    { "id": "shared", "type": "cloud", "label": "shared", "sublabel": "base errors", "pos": [440, 340], "size": [145, 60] },
+    { "id": "domain", "type": "backend", "label": "domain", "sublabel": "entities + value objects", "pos": [650, 80], "size": [190, 60] },
+    { "id": "application", "type": "backend", "label": "application", "sublabel": "services pending", "pos": [670, 210], "size": [160, 60] },
+    { "id": "interfaces", "type": "messagebus", "label": "interfaces", "sublabel": "stable ports", "pos": [890, 145], "size": [150, 60] },
+    { "id": "persistence", "type": "database", "label": "persistence", "sublabel": "Database + repositories", "pos": [870, 305], "size": [190, 60] },
+    { "id": "pgadapter", "type": "database", "label": "PostgreSQL Adapter", "sublabel": "PostgresDatabase", "pos": [670, 455], "size": [170, 60], "tag": "optional" },
+    { "id": "pqxx", "type": "external", "label": "libpqxx", "sublabel": "compiled with flag", "pos": [910, 455], "size": [130, 60] },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "runtime database", "pos": [910, 580], "size": [130, 60] }
   ],
   "boundaries": [
     { "kind": "region", "label": "Nucleo vendor-neutral", "wraps": ["core", "shared", "domain", "application", "interfaces", "persistence"] },
@@ -28,16 +28,16 @@
     { "from": "main", "to": "env", "label": "load env", "variant": "emphasis" },
     { "from": "env", "to": "core", "label": "AppConfig", "variant": "emphasis", "fromSide": "right", "toSide": "left", "route": "orthogonal-h", "labelDy": -42 },
     { "from": "env", "to": "shared", "label": "errors", "variant": "dashed", "fromSide": "right", "toSide": "left", "route": "orthogonal-h", "labelDy": 42 },
-    { "from": "domain", "to": "application", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "from": "application", "to": "domain", "label": "uses model", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "route": "orthogonal-v", "labelDx": -44 },
     { "from": "application", "to": "interfaces", "label": "ports", "variant": "emphasis" },
-    { "from": "application", "to": "persistence", "label": "contracts", "variant": "emphasis", "fromSide": "bottom", "toSide": "left", "route": "orthogonal-h", "labelDy": 34 },
+    { "from": "application", "to": "persistence", "label": "repo contracts", "variant": "emphasis", "fromSide": "bottom", "toSide": "left", "route": "orthogonal-h", "labelDy": 34 },
     { "from": "pgadapter", "to": "persistence", "label": "extends", "variant": "security", "fromSide": "top", "toSide": "bottom", "route": "orthogonal-v", "labelDy": -20 },
     { "from": "pgadapter", "to": "pqxx", "label": "uses", "variant": "dashed" },
     { "from": "pqxx", "to": "postgres", "label": "SQL", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 24 }
   ],
   "cards": [
-    { "dot": "emerald", "title": "Nucleo", "items": ["Domain/application ainda reservados para regras futuras", "Persistence define contratos sem fornecedor concreto"] },
-    { "dot": "cyan", "title": "Inicializacao", "items": ["main.cpp carrega AppConfig via variaveis de ambiente", "PostgreSQL so conecta quando VP_USE_POSTGRES=true"] },
-    { "dot": "rose", "title": "PostgreSQL", "items": ["Adapter opcional via VIRTUAL_PLANNER_WITH_POSTGRES=ON", "libpqxx fica restrito a infrastructure/postgres"] }
+    { "dot": "emerald", "title": "Dominio", "items": ["User, Task, Goal e Reminder ja modelados", "Date e TimeSlot ficam livres de infraestrutura"] },
+    { "dot": "violet", "title": "Persistencia", "items": ["Database e Transaction continuam vendor-neutral", "User/Task/Goal/ReminderRepository sao contratos"] },
+    { "dot": "rose", "title": "PostgreSQL", "items": ["Adapter opcional via VIRTUAL_PLANNER_WITH_POSTGRES=ON", "Ainda sem schema ou repositories concretos"] }
   ]
 }

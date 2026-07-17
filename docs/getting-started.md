@@ -7,8 +7,6 @@
 - `libpqxx` apenas para compilar com PostgreSQL.
 - Docker opcional para subir PostgreSQL local.
 
-Este projeto foi validado no macOS com Apple clang e CMake 4.4.0.
-
 ## Build Padrão
 
 ```bash
@@ -21,6 +19,8 @@ cmake --build build
 ```bash
 ctest --test-dir build --output-on-failure
 ```
+
+Os testes padrão atuais cobrem configuração da aplicação, ciclo de vida base de persistência e configuração PostgreSQL. Testes unitários específicos do domínio devem ser adicionados junto com a evolução das entidades, value objects e services.
 
 ## Execução Padrão
 

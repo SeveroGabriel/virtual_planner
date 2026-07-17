@@ -8,6 +8,7 @@ Permitir persistência real com PostgreSQL sem acoplar o núcleo da aplicação 
 
 - `persistence::Database`: controla ciclo de vida genérico de persistência.
 - `persistence::Transaction`: contrato mínimo de transação.
+- `persistence::*Repository`: portas de persistência para entidades de domínio.
 - `infrastructure::postgres::PostgresConfig`: valida e monta configuração PostgreSQL.
 - `infrastructure::postgres::PostgresDatabase`: abre, valida e encerra conexão PostgreSQL via `libpqxx`.
 - `infrastructure::postgres::PostgresTransaction`: encapsula `pqxx::work` e garante rollback automático se a transação sair de escopo sem `commit()`.
@@ -48,13 +49,21 @@ libpqxx
 
 ## Repositórios
 
-Ainda não há repositórios concretos PostgreSQL porque o projeto não possui entidades de domínio. Quando surgirem, as implementações devem ficar em `infrastructure/postgres` e usar queries parametrizadas.
+O projeto já possui contratos de repositório para entidades do domínio:
+
+- `UserRepository`.
+- `TaskRepository`.
+- `GoalRepository`.
+- `ReminderRepository`.
+
+Esses contratos ficam em `persistence` porque são portas estáveis do núcleo. Ainda não há implementação concreta PostgreSQL para esses repositórios. Quando forem criadas, as implementações devem ficar em `infrastructure/postgres` e usar queries parametrizadas.
 
 ## Limitações
 
 - Sem pool de conexões.
 - Sem migrations aplicadas automaticamente.
-- Sem repositórios concretos.
+- Sem schema SQL real.
+- Sem repositórios concretos PostgreSQL para entidades de domínio.
 - Sem thread-safety documentada para uso concorrente.
 
 Essas limitações são intencionais para evitar complexidade prematura no escopo acadêmico atual.

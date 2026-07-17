@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,25 +14,24 @@
         try {
           var param = new URLSearchParams(window.location.search).get('theme');
           if (param === 'light' || param === 'dark') theme = param;
-        } catch (_) { }
+        } catch (_) {}
         if (!theme) {
-          try { theme = localStorage.getItem('archify-theme'); } catch (_) { }
+          try { theme = localStorage.getItem('archify-theme'); } catch (_) {}
         }
         if (theme !== 'light' && theme !== 'dark') {
           theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         }
         document.documentElement.setAttribute('data-theme', theme);
-      } catch (_) { }
+      } catch (_) {}
     })();
   </script>
   <!-- Async font load: a blackholed network must not block first paint.
        The body font stack falls back to system monospace until it lands. -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-    rel="stylesheet" media="print" onload="this.media='all'">
+        rel="stylesheet" media="print" onload="this.media='all'">
   <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-      rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   </noscript>
   <style>
     /* ==========================================================
@@ -61,26 +59,26 @@
          so the arrows drawn underneath are properly hidden. */
       --mask: #0f172a;
 
-      --frontend-fill: rgba(8, 51, 68, 0.4);
-      --frontend-stroke: #22d3ee;
-      --backend-fill: rgba(6, 78, 59, 0.4);
-      --backend-stroke: #34d399;
-      --database-fill: rgba(76, 29, 149, 0.4);
-      --database-stroke: #a78bfa;
-      --cloud-fill: rgba(120, 53, 15, 0.3);
-      --cloud-stroke: #fbbf24;
-      --security-fill: rgba(136, 19, 55, 0.4);
-      --security-stroke: #fb7185;
-      --messagebus-fill: rgba(251, 146, 60, 0.3);
-      --messagebus-stroke: #fb923c;
-      --external-fill: rgba(30, 41, 59, 0.5);
-      --external-stroke: #94a3b8;
+      --frontend-fill:    rgba(8, 51, 68, 0.4);
+      --frontend-stroke:  #22d3ee;
+      --backend-fill:     rgba(6, 78, 59, 0.4);
+      --backend-stroke:   #34d399;
+      --database-fill:    rgba(76, 29, 149, 0.4);
+      --database-stroke:  #a78bfa;
+      --cloud-fill:       rgba(120, 53, 15, 0.3);
+      --cloud-stroke:     #fbbf24;
+      --security-fill:    rgba(136, 19, 55, 0.4);
+      --security-stroke:  #fb7185;
+      --messagebus-fill:  rgba(251, 146, 60, 0.3);
+      --messagebus-stroke:#fb923c;
+      --external-fill:    rgba(30, 41, 59, 0.5);
+      --external-stroke:  #94a3b8;
 
-      --toolbar-bg: rgba(15, 23, 42, 0.8);
-      --toolbar-border: #334155;
-      --toolbar-text: #e2e8f0;
-      --toolbar-hover: rgba(15, 23, 42, 0.95);
-      --toolbar-menu-bg: #0f172a;
+      --toolbar-bg:       rgba(15, 23, 42, 0.8);
+      --toolbar-border:   #334155;
+      --toolbar-text:     #e2e8f0;
+      --toolbar-hover:    rgba(15, 23, 42, 0.95);
+      --toolbar-menu-bg:  #0f172a;
     }
 
     [data-theme="light"] {
@@ -101,33 +99,29 @@
 
       --mask: #ffffff;
 
-      --frontend-fill: rgba(34, 211, 238, 0.15);
-      --frontend-stroke: #0891b2;
-      --backend-fill: rgba(52, 211, 153, 0.18);
-      --backend-stroke: #059669;
-      --database-fill: rgba(167, 139, 250, 0.2);
-      --database-stroke: #7c3aed;
-      --cloud-fill: rgba(251, 191, 36, 0.18);
-      --cloud-stroke: #d97706;
-      --security-fill: rgba(251, 113, 133, 0.15);
-      --security-stroke: #e11d48;
-      --messagebus-fill: rgba(251, 146, 60, 0.15);
-      --messagebus-stroke: #ea580c;
-      --external-fill: rgba(148, 163, 184, 0.18);
-      --external-stroke: #64748b;
+      --frontend-fill:    rgba(34, 211, 238, 0.15);
+      --frontend-stroke:  #0891b2;
+      --backend-fill:     rgba(52, 211, 153, 0.18);
+      --backend-stroke:   #059669;
+      --database-fill:    rgba(167, 139, 250, 0.2);
+      --database-stroke:  #7c3aed;
+      --cloud-fill:       rgba(251, 191, 36, 0.18);
+      --cloud-stroke:     #d97706;
+      --security-fill:    rgba(251, 113, 133, 0.15);
+      --security-stroke:  #e11d48;
+      --messagebus-fill:  rgba(251, 146, 60, 0.15);
+      --messagebus-stroke:#ea580c;
+      --external-fill:    rgba(148, 163, 184, 0.18);
+      --external-stroke:  #64748b;
 
-      --toolbar-bg: rgba(255, 255, 255, 0.92);
-      --toolbar-border: #cbd5e1;
-      --toolbar-text: #334155;
-      --toolbar-hover: #ffffff;
-      --toolbar-menu-bg: #ffffff;
+      --toolbar-bg:       rgba(255, 255, 255, 0.92);
+      --toolbar-border:   #cbd5e1;
+      --toolbar-text:     #334155;
+      --toolbar-hover:    #ffffff;
+      --toolbar-menu-bg:  #ffffff;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace;
@@ -138,14 +132,9 @@
       transition: background 0.2s ease, color 0.2s ease;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+    .container { max-width: 1200px; margin: 0 auto; }
 
-    .header {
-      margin-bottom: 2rem;
-    }
+    .header { margin-bottom: 2rem; }
 
     .header-row {
       display: flex;
@@ -163,15 +152,8 @@
     }
 
     @keyframes pulse {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.5;
-      }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
 
     h1 {
@@ -227,39 +209,15 @@
       border-radius: 50%;
     }
 
-    .card-dot.cyan {
-      background: var(--frontend-stroke);
-    }
+    .card-dot.cyan     { background: var(--frontend-stroke); }
+    .card-dot.emerald  { background: var(--backend-stroke); }
+    .card-dot.violet   { background: var(--database-stroke); }
+    .card-dot.amber    { background: var(--cloud-stroke); }
+    .card-dot.rose     { background: var(--security-stroke); }
+    .card-dot.orange   { background: var(--messagebus-stroke); }
+    .card-dot.slate    { background: var(--external-stroke); }
 
-    .card-dot.emerald {
-      background: var(--backend-stroke);
-    }
-
-    .card-dot.violet {
-      background: var(--database-stroke);
-    }
-
-    .card-dot.amber {
-      background: var(--cloud-stroke);
-    }
-
-    .card-dot.rose {
-      background: var(--security-stroke);
-    }
-
-    .card-dot.orange {
-      background: var(--messagebus-stroke);
-    }
-
-    .card-dot.slate {
-      background: var(--external-stroke);
-    }
-
-    .card h3 {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--text);
-    }
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--text); }
 
     .card ul {
       list-style: none;
@@ -267,9 +225,7 @@
       font-size: 0.75rem;
     }
 
-    .card li {
-      margin-bottom: 0.375rem;
-    }
+    .card li { margin-bottom: 0.375rem; }
 
     .footer {
       text-align: center;
@@ -284,19 +240,13 @@
        so wide diagrams fit, pack summary cards into 2 columns to
        avoid an orphan card on a trailing page.
        ========================================================== */
-    @page {
-      size: landscape;
-      margin: 1.5cm;
-    }
+    @page { size: landscape; margin: 1.5cm; }
 
     @media print {
-
       /* Force the FULL light palette — including component fills/strokes and
          lane/arrow colors — so printing from dark theme doesn't put neon
          strokes and translucent dark fills on white paper. */
-      :root,
-      [data-theme="dark"],
-      [data-theme="light"] {
+      :root, [data-theme="dark"], [data-theme="light"] {
         --bg: #ffffff;
         --grid: transparent;
         --panel: #ffffff;
@@ -310,62 +260,30 @@
         --lane-stroke: #cbd5e1;
         --arrow: #94a3b8;
         --arrow-emphasis: #059669;
-        --frontend-fill: rgba(34, 211, 238, 0.15);
-        --frontend-stroke: #0891b2;
-        --backend-fill: rgba(52, 211, 153, 0.18);
-        --backend-stroke: #059669;
-        --database-fill: rgba(167, 139, 250, 0.2);
-        --database-stroke: #7c3aed;
-        --cloud-fill: rgba(251, 191, 36, 0.18);
-        --cloud-stroke: #d97706;
-        --security-fill: rgba(251, 113, 133, 0.15);
-        --security-stroke: #e11d48;
-        --messagebus-fill: rgba(251, 146, 60, 0.15);
-        --messagebus-stroke: #ea580c;
-        --external-fill: rgba(148, 163, 184, 0.18);
-        --external-stroke: #64748b;
+        --frontend-fill:    rgba(34, 211, 238, 0.15);
+        --frontend-stroke:  #0891b2;
+        --backend-fill:     rgba(52, 211, 153, 0.18);
+        --backend-stroke:   #059669;
+        --database-fill:    rgba(167, 139, 250, 0.2);
+        --database-stroke:  #7c3aed;
+        --cloud-fill:       rgba(251, 191, 36, 0.18);
+        --cloud-stroke:     #d97706;
+        --security-fill:    rgba(251, 113, 133, 0.15);
+        --security-stroke:  #e11d48;
+        --messagebus-fill:  rgba(251, 146, 60, 0.15);
+        --messagebus-stroke:#ea580c;
+        --external-fill:    rgba(148, 163, 184, 0.18);
+        --external-stroke:  #64748b;
       }
-
-      body {
-        background: #ffffff !important;
-        padding: 0;
-      }
-
-      .container {
-        max-width: none;
-      }
-
-      .toolbar,
-      .archify-toast,
-      .no-print {
-        display: none !important;
-      }
-
-      .diagram-container,
-      .card {
-        box-shadow: none;
-        border-color: #e2e8f0;
-      }
-
-      .cards {
-        grid-template-columns: 1fr 1fr;
-      }
-
+      body { background: #ffffff !important; padding: 0; }
+      .container { max-width: none; }
+      .toolbar, .archify-toast, .no-print { display: none !important; }
+      .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
+      .cards { grid-template-columns: 1fr 1fr; }
       /* Ensure elements break sensibly across pages */
-      .card {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-
-      .diagram-container {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-
-      h1,
-      .subtitle {
-        color: #0f172a;
-      }
+      .card { break-inside: avoid; page-break-inside: avoid; }
+      .diagram-container { break-inside: avoid; page-break-inside: avoid; }
+      h1, .subtitle { color: #0f172a; }
     }
 
     /* ==========================================================
@@ -379,7 +297,6 @@
       gap: 0.5rem;
       z-index: 100;
     }
-
     .toolbar button {
       background: var(--toolbar-bg);
       color: var(--toolbar-text);
@@ -396,21 +313,15 @@
       align-items: center;
       gap: 0.375rem;
     }
-
     .toolbar button:hover {
       background: var(--toolbar-hover);
       border-color: var(--arrow);
     }
-
     .toolbar button:focus-visible {
       outline: 2px solid var(--frontend-stroke);
       outline-offset: 2px;
     }
-
-    .toolbar .export-wrap {
-      position: relative;
-    }
-
+    .toolbar .export-wrap { position: relative; }
     .toolbar .export-menu {
       position: absolute;
       top: calc(100% + 0.375rem);
@@ -422,13 +333,9 @@
       min-width: 160px;
       display: none;
       flex-direction: column;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
     }
-
-    .toolbar .export-menu.open {
-      display: flex;
-    }
-
+    .toolbar .export-menu.open { display: flex; }
     .toolbar .export-menu button {
       background: transparent;
       border: 0;
@@ -437,16 +344,13 @@
       text-align: left;
       padding: 0.5rem 0.75rem;
     }
-
     .toolbar .export-menu button:hover {
       background: var(--toolbar-hover);
     }
-
     .toolbar .export-menu .hint {
       color: var(--text-faint);
       font-size: 0.625rem;
     }
-
     .toolbar .export-menu hr {
       border: 0;
       border-top: 1px solid var(--toolbar-border);
@@ -471,50 +375,38 @@
       transition: opacity 0.2s, transform 0.2s;
       z-index: 200;
       pointer-events: none;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
     }
-
     .archify-toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
 
     @media (max-width: 720px) {
-      body {
-        padding: 1rem;
-      }
-
+      body { padding: 1rem; }
       .toolbar {
         position: static;
         justify-content: flex-end;
         margin-bottom: 1rem;
       }
-
-      .header {
-        margin-bottom: 1.25rem;
-      }
-
+      .header { margin-bottom: 1.25rem; }
       .header-row {
         gap: 0.75rem;
         align-items: flex-start;
       }
-
       h1 {
         font-size: 1.25rem;
         line-height: 1.25;
       }
-
       .subtitle {
         margin-left: 0;
         font-size: 0.8125rem;
         line-height: 1.55;
       }
-
       .diagram-container {
         padding: 0.75rem;
         border-radius: 0.75rem;
       }
-
       .cards {
         grid-template-columns: 1fr;
         margin-top: 1rem;
@@ -524,150 +416,45 @@
     /* ==========================================================
        SVG SEMANTIC CLASSES — use these instead of inline fill/stroke
        ========================================================== */
-    .c-grid {
-      stroke: var(--grid);
-      fill: none;
-    }
+    .c-grid       { stroke: var(--grid); fill: none; }
+    .c-mask       { fill: var(--mask); stroke: none; }
 
-    .c-mask {
-      fill: var(--mask);
-      stroke: none;
-    }
-
-    .c-frontend {
-      fill: var(--frontend-fill);
-      stroke: var(--frontend-stroke);
-    }
-
-    .c-backend {
-      fill: var(--backend-fill);
-      stroke: var(--backend-stroke);
-    }
-
-    .c-database {
-      fill: var(--database-fill);
-      stroke: var(--database-stroke);
-    }
-
-    .c-cloud {
-      fill: var(--cloud-fill);
-      stroke: var(--cloud-stroke);
-    }
-
-    .c-security {
-      fill: var(--security-fill);
-      stroke: var(--security-stroke);
-    }
-
-    .c-messagebus {
-      fill: var(--messagebus-fill);
-      stroke: var(--messagebus-stroke);
-    }
-
-    .c-external {
-      fill: var(--external-fill);
-      stroke: var(--external-stroke);
-    }
+    .c-frontend   { fill: var(--frontend-fill);   stroke: var(--frontend-stroke); }
+    .c-backend    { fill: var(--backend-fill);    stroke: var(--backend-stroke); }
+    .c-database   { fill: var(--database-fill);   stroke: var(--database-stroke); }
+    .c-cloud      { fill: var(--cloud-fill);      stroke: var(--cloud-stroke); }
+    .c-security   { fill: var(--security-fill);   stroke: var(--security-stroke); }
+    .c-messagebus { fill: var(--messagebus-fill); stroke: var(--messagebus-stroke); }
+    .c-external   { fill: var(--external-fill);   stroke: var(--external-stroke); }
 
     /* Text helpers */
-    .t-primary {
-      fill: var(--text);
-    }
-
-    .t-muted {
-      fill: var(--text-muted);
-    }
-
-    .t-dim {
-      fill: var(--text-dim);
-    }
-
-    .t-frontend {
-      fill: var(--frontend-stroke);
-    }
-
-    .t-backend {
-      fill: var(--backend-stroke);
-    }
-
-    .t-database {
-      fill: var(--database-stroke);
-    }
-
-    .t-cloud {
-      fill: var(--cloud-stroke);
-    }
-
-    .t-security {
-      fill: var(--security-stroke);
-    }
-
-    .t-messagebus {
-      fill: var(--messagebus-stroke);
-    }
-
-    .t-external {
-      fill: var(--external-stroke);
-    }
+    .t-primary { fill: var(--text); }
+    .t-muted   { fill: var(--text-muted); }
+    .t-dim     { fill: var(--text-dim); }
+    .t-frontend   { fill: var(--frontend-stroke); }
+    .t-backend    { fill: var(--backend-stroke); }
+    .t-database   { fill: var(--database-stroke); }
+    .t-cloud      { fill: var(--cloud-stroke); }
+    .t-security   { fill: var(--security-stroke); }
+    .t-messagebus { fill: var(--messagebus-stroke); }
+    .t-external   { fill: var(--external-stroke); }
 
     /* Arrows */
-    .a-default {
-      stroke: var(--arrow);
-      fill: none;
-    }
-
-    .a-emphasis {
-      stroke: var(--arrow-emphasis);
-      fill: none;
-    }
-
-    .a-security {
-      stroke: var(--security-stroke);
-      fill: none;
-      stroke-dasharray: 5, 5;
-    }
-
-    .a-dashed {
-      stroke: var(--database-stroke);
-      fill: none;
-      stroke-dasharray: 4, 4;
-    }
+    .a-default   { stroke: var(--arrow); fill: none; }
+    .a-emphasis  { stroke: var(--arrow-emphasis); fill: none; }
+    .a-security  { stroke: var(--security-stroke); fill: none; stroke-dasharray: 5,5; }
+    .a-dashed    { stroke: var(--database-stroke); fill: none; stroke-dasharray: 4,4; }
 
     /* Arrowhead markers reference these */
-    .m-default {
-      fill: var(--arrow);
-    }
-
-    .m-emphasis {
-      fill: var(--arrow-emphasis);
-    }
-
-    .m-security {
-      fill: var(--security-stroke);
-    }
-
-    .m-dashed {
-      fill: var(--database-stroke);
-    }
+    .m-default   { fill: var(--arrow); }
+    .m-emphasis  { fill: var(--arrow-emphasis); }
+    .m-security  { fill: var(--security-stroke); }
+    .m-dashed    { fill: var(--database-stroke); }
 
     /* Dashed boundary variants */
-    .c-security-group {
-      fill: transparent;
-      stroke: var(--security-stroke);
-      stroke-dasharray: 4, 4;
-    }
-
-    .c-region {
-      fill: rgba(251, 191, 36, 0.05);
-      stroke: var(--cloud-stroke);
-      stroke-dasharray: 8, 4;
-    }
-
-    .c-lane {
-      fill: var(--lane-fill);
-      stroke: var(--lane-stroke);
-      stroke-dasharray: 6, 6;
-    }
+    .c-security-group { fill: transparent; stroke: var(--security-stroke); stroke-dasharray: 4,4; }
+    .c-region         { fill: rgba(251, 191, 36, 0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
+    .c-lane           { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-dasharray: 6,6; }
 
     /* Optional trace animation, enabled only by meta.animation = "trace".
        Static diagrams do not carry data-animation and render exactly as before. */
@@ -677,36 +464,22 @@
       animation: archify-edge-flow 2.4s linear infinite;
       animation-delay: calc(var(--step, 0) * 160ms);
     }
-
     svg[data-animation="trace"] [data-animate="node"] {
       transform-box: fill-box;
       transform-origin: center;
       animation: archify-node-pulse 3.6s ease-in-out infinite;
       animation-delay: calc(var(--step, 0) * 160ms);
     }
-
     @keyframes archify-edge-flow {
-      to {
-        stroke-dashoffset: 0;
-      }
+      to { stroke-dashoffset: 0; }
     }
-
     @keyframes archify-node-pulse {
-
-      0%,
-      72%,
-      100% {
-        filter: none;
-        stroke-width: 1.5;
-      }
-
-      18%,
-      36% {
+      0%, 72%, 100% { filter: none; stroke-width: 1.5; }
+      18%, 36% {
         filter: drop-shadow(0 0 8px var(--arrow-emphasis));
         stroke-width: 2.4;
       }
     }
-
     @media (prefers-reduced-motion: reduce) {
       svg[data-animation="trace"] [data-animate] {
         animation: none !important;
@@ -715,30 +488,34 @@
     }
   </style>
 </head>
-
 <body>
   <!-- Toolbar: theme toggle + export menu (present on every generated diagram)
        Keyboard: T toggles theme, E opens export menu (when no input focused) -->
   <div class="toolbar" role="toolbar" aria-label="Diagram actions">
-    <button id="btn-theme" type="button" title="Toggle theme (T)" aria-label="Toggle color theme" aria-pressed="false">
+    <button id="btn-theme" type="button"
+            title="Toggle theme (T)"
+            aria-label="Toggle color theme"
+            aria-pressed="false">
       <span id="theme-icon" aria-hidden="true">&#9790;</span>
       <span id="theme-label">Dark</span>
     </button>
     <div class="export-wrap">
-      <button id="btn-export" type="button" title="Export diagram (E)" aria-label="Export diagram" aria-haspopup="menu"
-        aria-expanded="false" aria-controls="export-menu">
+      <button id="btn-export" type="button"
+              title="Export diagram (E)"
+              aria-label="Export diagram"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="export-menu">
         Export <span aria-hidden="true">&#9662;</span>
       </button>
       <div class="export-menu" id="export-menu" role="menu" aria-label="Export">
-        <button data-action="copy" type="button" role="menuitem" tabindex="-1">Copy to clipboard <span
-            class="hint">PNG</span></button>
+        <button data-action="copy"  type="button" role="menuitem" tabindex="-1">Copy to clipboard <span class="hint">PNG</span></button>
         <hr role="separator">
-        <button data-format="png" type="button" role="menuitem" tabindex="-1">Download PNG</button>
-        <button data-format="jpeg" type="button" role="menuitem" tabindex="-1">Download JPEG</button>
-        <button data-format="webp" type="button" role="menuitem" tabindex="-1">Download WebP</button>
+        <button data-format="png"   type="button" role="menuitem" tabindex="-1">Download PNG</button>
+        <button data-format="jpeg"  type="button" role="menuitem" tabindex="-1">Download JPEG</button>
+        <button data-format="webp"  type="button" role="menuitem" tabindex="-1">Download WebP</button>
         <hr role="separator">
-        <button data-format="svg" type="button" role="menuitem" tabindex="-1">Download SVG <span
-            class="hint">vector</span></button>
+        <button data-format="svg"   type="button" role="menuitem" tabindex="-1">Download SVG <span class="hint">vector</span></button>
       </div>
     </div>
   </div>
@@ -750,13 +527,12 @@
         <div class="pulse-dot"></div>
         <h1>Virtual Planner - Arquitetura Atual</h1>
       </div>
-      <p class="subtitle">Base modular C++20 com nucleo vendor-neutral e adapter PostgreSQL opcional</p>
+      <p class="subtitle">Dominio inicial, persistencia vendor-neutral e adapter PostgreSQL opcional</p>
     </div>
 
     <!-- Main Diagram -->
     <div class="diagram-container">
-      <svg viewBox="0 0 1080 700" role="img"
-        aria-label="Virtual Planner - Arquitetura Atual — Base modular C++20 com nucleo vendor-neutral e adapter PostgreSQL opcional (architecture diagram)">
+      <svg viewBox="0 0 1120 720" role="img" aria-label="Virtual Planner - Arquitetura Atual — Dominio inicial, persistencia vendor-neutral e adapter PostgreSQL opcional (architecture diagram)">
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -772,7 +548,7 @@
             <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
           </marker>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5" />
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
           </pattern>
         </defs>
 
@@ -780,117 +556,112 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect x="410" y="60" width="620" height="350" rx="12" class="c-region" stroke-width="1" />
-        <text x="418" y="78" class="t-cloud" font-size="9" font-weight="600">Nucleo vendor-neutral</text>
+        <rect x="410" y="50" width="680" height="370" rx="12" class="c-region" stroke-width="1"/>
+        <text x="418" y="68" class="t-cloud" font-size="9" font-weight="600">Nucleo vendor-neutral</text>
 
-        <rect x="200" y="260" width="850" height="370" rx="8" class="c-security-group" stroke-width="1" />
-        <text x="208" y="278" class="t-security" font-size="9" font-weight="600">Infraestrutura concreta</text>
+        <rect x="200" y="270" width="870" height="390" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="208" y="288" class="t-security" font-size="9" font-weight="600">Infraestrutura concreta</text>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path d="M 170 320 L 230 320" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)" />
-        <path d="M 380 320 L 402 320 Q 410 320 410 312 L 410 248 Q 410 240 418 240 L 440 240" class="a-emphasis"
-          stroke-width="1.8" marker-end="url(#arrowhead-emphasis)" />
-        <path d="M 380 320 L 402 320 Q 410 320 410 328 L 410 352 Q 410 360 418 360 L 440 360" class="a-dashed"
-          stroke-width="1.5" marker-end="url(#arrowhead-dashed)" />
-        <path d="M 735 150 L 735 190" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)" />
-        <path d="M 810 220 L 822 220 Q 830 220 830 212 L 830 178 Q 830 170 838 170 L 850 170" class="a-emphasis"
-          stroke-width="1.8" marker-end="url(#arrowhead-emphasis)" />
-        <path d="M 735 250 L 784.5 250 Q 792.5 250 792.5 258 L 792.5 312 Q 792.5 320 800.5 320 L 850 320"
-          class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)" />
-        <path d="M 745 430 L 745 398 Q 745 390 753 390 L 917 390 Q 925 390 925 382 L 925 350" class="a-security"
-          stroke-width="1.5" marker-end="url(#arrowhead-security)" />
-        <path d="M 830 460 L 890 460" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)" />
-        <path d="M 955 490 L 955 550" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)" />
+        <path d="M 170 330 L 230 330" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 380 330 L 402 330 Q 410 330 410 322 L 410 248 Q 410 240 418 240 L 440 240" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 380 330 L 402 330 Q 410 330 410 338 L 410 362 Q 410 370 418 370 L 440 370" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 750 210 L 750 177.5 Q 750 175 747.5 175 L 747.5 175 Q 745 175 745 172.5 L 745 140" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 830 240 L 852 240 Q 860 240 860 232 L 860 183 Q 860 175 868 175 L 890 175" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 750 270 L 802 270 Q 810 270 810 278 L 810 327 Q 810 335 818 335 L 870 335" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 755 455 L 755 418 Q 755 410 763 410 L 957 410 Q 965 410 965 402 L 965 365" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path d="M 840 485 L 910 485" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 975 515 L 975 580" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
-        <rect x="40" y="290" width="130" height="60" rx="6" class="c-mask" />
-        <rect x="40" y="290" width="130" height="60" rx="6" class="c-backend" stroke-width="1.5" />
-        <text x="105" y="318" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">main.cpp</text>
-        <text x="105" y="334" class="t-muted" font-size="9" text-anchor="middle">composition root</text>
+        <rect x="40" y="300" width="130" height="60" rx="6" class="c-mask"/>
+        <rect x="40" y="300" width="130" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="105" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">main.cpp</text>
+        <text x="105" y="344" class="t-muted" font-size="9" text-anchor="middle">composition root</text>
 
-        <rect x="230" y="290" width="150" height="60" rx="6" class="c-mask" />
-        <rect x="230" y="290" width="150" height="60" rx="6" class="c-cloud" stroke-width="1.5" />
-        <text x="305" y="318" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Env Config</text>
-        <text x="305" y="334" class="t-muted" font-size="9" text-anchor="middle">EnvironmentConfigLoader</text>
+        <rect x="230" y="300" width="150" height="60" rx="6" class="c-mask"/>
+        <rect x="230" y="300" width="150" height="60" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="305" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Env Config</text>
+        <text x="305" y="344" class="t-muted" font-size="9" text-anchor="middle">EnvironmentConfigLoader</text>
 
-        <rect x="440" y="210" width="145" height="60" rx="6" class="c-mask" />
-        <rect x="440" y="210" width="145" height="60" rx="6" class="c-backend" stroke-width="1.5" />
+        <rect x="440" y="210" width="145" height="60" rx="6" class="c-mask"/>
+        <rect x="440" y="210" width="145" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
         <text x="512.5" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">core</text>
         <text x="512.5" y="254" class="t-muted" font-size="9" text-anchor="middle">AppConfig + profile</text>
 
-        <rect x="440" y="330" width="145" height="60" rx="6" class="c-mask" />
-        <rect x="440" y="330" width="145" height="60" rx="6" class="c-cloud" stroke-width="1.5" />
-        <text x="512.5" y="358" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">shared</text>
-        <text x="512.5" y="374" class="t-muted" font-size="9" text-anchor="middle">base errors</text>
+        <rect x="440" y="340" width="145" height="60" rx="6" class="c-mask"/>
+        <rect x="440" y="340" width="145" height="60" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="512.5" y="368" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">shared</text>
+        <text x="512.5" y="384" class="t-muted" font-size="9" text-anchor="middle">base errors</text>
 
-        <rect x="660" y="90" width="150" height="60" rx="6" class="c-mask" />
-        <rect x="660" y="90" width="150" height="60" rx="6" class="c-backend" stroke-width="1.5" />
-        <text x="735" y="118" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">domain</text>
-        <text x="735" y="134" class="t-muted" font-size="9" text-anchor="middle">future entities</text>
+        <rect x="650" y="80" width="190" height="60" rx="6" class="c-mask"/>
+        <rect x="650" y="80" width="190" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="745" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">domain</text>
+        <text x="745" y="124" class="t-muted" font-size="9" text-anchor="middle">entities + value objects</text>
 
-        <rect x="660" y="190" width="150" height="60" rx="6" class="c-mask" />
-        <rect x="660" y="190" width="150" height="60" rx="6" class="c-backend" stroke-width="1.5" />
-        <text x="735" y="218" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">application</text>
-        <text x="735" y="234" class="t-muted" font-size="9" text-anchor="middle">future use cases</text>
+        <rect x="670" y="210" width="160" height="60" rx="6" class="c-mask"/>
+        <rect x="670" y="210" width="160" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="750" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">application</text>
+        <text x="750" y="254" class="t-muted" font-size="9" text-anchor="middle">services pending</text>
 
-        <rect x="850" y="140" width="150" height="60" rx="6" class="c-mask" />
-        <rect x="850" y="140" width="150" height="60" rx="6" class="c-messagebus" stroke-width="1.5" />
-        <text x="925" y="168" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">interfaces</text>
-        <text x="925" y="184" class="t-muted" font-size="9" text-anchor="middle">ports</text>
+        <rect x="890" y="145" width="150" height="60" rx="6" class="c-mask"/>
+        <rect x="890" y="145" width="150" height="60" rx="6" class="c-messagebus" stroke-width="1.5"/>
+        <text x="965" y="173" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">interfaces</text>
+        <text x="965" y="189" class="t-muted" font-size="9" text-anchor="middle">stable ports</text>
 
-        <rect x="850" y="290" width="150" height="60" rx="6" class="c-mask" />
-        <rect x="850" y="290" width="150" height="60" rx="6" class="c-database" stroke-width="1.5" />
-        <text x="925" y="318" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">persistence</text>
-        <text x="925" y="334" class="t-muted" font-size="9" text-anchor="middle">Database + Transaction</text>
+        <rect x="870" y="305" width="190" height="60" rx="6" class="c-mask"/>
+        <rect x="870" y="305" width="190" height="60" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="965" y="333" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">persistence</text>
+        <text x="965" y="349" class="t-muted" font-size="9" text-anchor="middle">Database + repositories</text>
 
-        <rect x="660" y="430" width="170" height="60" rx="6" class="c-mask" />
-        <rect x="660" y="430" width="170" height="60" rx="6" class="c-database" stroke-width="1.5" />
-        <text x="745" y="458" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL
-          Adapter</text>
-        <text x="745" y="474" class="t-muted" font-size="9" text-anchor="middle">PostgresDatabase</text>
-        <text x="745" y="482" class="t-database" font-size="7" text-anchor="middle">optional</text>
+        <rect x="670" y="455" width="170" height="60" rx="6" class="c-mask"/>
+        <rect x="670" y="455" width="170" height="60" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="755" y="483" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL Adapter</text>
+        <text x="755" y="499" class="t-muted" font-size="9" text-anchor="middle">PostgresDatabase</text>
+        <text x="755" y="507" class="t-database" font-size="7" text-anchor="middle">optional</text>
 
-        <rect x="890" y="430" width="130" height="60" rx="6" class="c-mask" />
-        <rect x="890" y="430" width="130" height="60" rx="6" class="c-external" stroke-width="1.5" />
-        <text x="955" y="458" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">libpqxx</text>
-        <text x="955" y="474" class="t-muted" font-size="9" text-anchor="middle">compiled with flag</text>
+        <rect x="910" y="455" width="130" height="60" rx="6" class="c-mask"/>
+        <rect x="910" y="455" width="130" height="60" rx="6" class="c-external" stroke-width="1.5"/>
+        <text x="975" y="483" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">libpqxx</text>
+        <text x="975" y="499" class="t-muted" font-size="9" text-anchor="middle">compiled with flag</text>
 
-        <rect x="890" y="550" width="130" height="60" rx="6" class="c-mask" />
-        <rect x="890" y="550" width="130" height="60" rx="6" class="c-database" stroke-width="1.5" />
-        <text x="955" y="578" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL</text>
-        <text x="955" y="594" class="t-muted" font-size="9" text-anchor="middle">runtime database</text>
+        <rect x="910" y="580" width="130" height="60" rx="6" class="c-mask"/>
+        <rect x="910" y="580" width="130" height="60" rx="6" class="c-database" stroke-width="1.5"/>
+        <text x="975" y="608" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL</text>
+        <text x="975" y="624" class="t-muted" font-size="9" text-anchor="middle">runtime database</text>
 
         <!-- Connection labels -->
-        <rect x="175.8" y="300" width="48.4" height="14" rx="3" class="c-mask" />
-        <text x="200" y="310" class="t-backend" font-size="8" text-anchor="middle">load env</text>
-        <rect x="383.4" y="218" width="53.199999999999996" height="14" rx="3" class="c-mask" />
-        <text x="410" y="228" class="t-backend" font-size="8" text-anchor="middle">AppConfig</text>
-        <rect x="390.6" y="362" width="38.8" height="14" rx="3" class="c-mask" />
-        <text x="410" y="372" class="t-messagebus" font-size="8" text-anchor="middle">errors</text>
-
-        <rect x="813" y="175" width="34" height="14" rx="3" class="c-mask" />
-        <text x="830" y="185" class="t-backend" font-size="8" text-anchor="middle">ports</text>
-        <rect x="765.9" y="299" width="53.199999999999996" height="14" rx="3" class="c-mask" />
-        <text x="792.5" y="309" class="t-backend" font-size="8" text-anchor="middle">contracts</text>
-        <rect x="813.2" y="350" width="43.6" height="14" rx="3" class="c-mask" />
-        <text x="835" y="360" class="t-security" font-size="8" text-anchor="middle">extends</text>
-        <rect x="845" y="440" width="30" height="14" rx="3" class="c-mask" />
-        <text x="860" y="450" class="t-messagebus" font-size="8" text-anchor="middle">uses</text>
-        <rect x="940" y="494" width="30" height="14" rx="3" class="c-mask" />
-        <text x="955" y="504" class="t-backend" font-size="8" text-anchor="middle">SQL</text>
+        <rect x="175.8" y="310" width="48.4" height="14" rx="3" class="c-mask"/>
+        <text x="200" y="320" class="t-backend" font-size="8" text-anchor="middle">load env</text>
+        <rect x="383.4" y="223" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+        <text x="410" y="233" class="t-backend" font-size="8" text-anchor="middle">AppConfig</text>
+        <rect x="390.6" y="372" width="38.8" height="14" rx="3" class="c-mask"/>
+        <text x="410" y="382" class="t-messagebus" font-size="8" text-anchor="middle">errors</text>
+        <rect x="674.5" y="155" width="58" height="14" rx="3" class="c-mask"/>
+        <text x="703.5" y="165" class="t-messagebus" font-size="8" text-anchor="middle">uses model</text>
+        <rect x="843" y="187.5" width="34" height="14" rx="3" class="c-mask"/>
+        <text x="860" y="197.5" class="t-backend" font-size="8" text-anchor="middle">ports</text>
+        <rect x="771.4" y="316.5" width="77.2" height="14" rx="3" class="c-mask"/>
+        <text x="810" y="326.5" class="t-backend" font-size="8" text-anchor="middle">repo contracts</text>
+        <rect x="838.2" y="370" width="43.6" height="14" rx="3" class="c-mask"/>
+        <text x="860" y="380" class="t-security" font-size="8" text-anchor="middle">extends</text>
+        <rect x="860" y="465" width="30" height="14" rx="3" class="c-mask"/>
+        <text x="875" y="475" class="t-messagebus" font-size="8" text-anchor="middle">uses</text>
+        <rect x="960" y="519" width="30" height="14" rx="3" class="c-mask"/>
+        <text x="975" y="529" class="t-backend" font-size="8" text-anchor="middle">SQL</text>
 
         <!-- Legend -->
-        <text x="40" y="671" class="t-primary" font-size="9" font-weight="600">Legend</text>
-        <rect x="40" y="676" width="14" height="9" rx="2" class="c-backend" stroke-width="1" />
-        <text x="60" y="684" class="t-muted" font-size="8">Backend</text>
-        <rect x="133" y="676" width="14" height="9" rx="2" class="c-cloud" stroke-width="1" />
-        <text x="153" y="684" class="t-muted" font-size="8">Cloud</text>
-        <rect x="216" y="676" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1" />
-        <text x="236" y="684" class="t-muted" font-size="8">Message bus</text>
-        <rect x="329" y="676" width="14" height="9" rx="2" class="c-database" stroke-width="1" />
-        <text x="349" y="684" class="t-muted" font-size="8">Database</text>
-        <rect x="427" y="676" width="14" height="9" rx="2" class="c-external" stroke-width="1" />
-        <text x="447" y="684" class="t-muted" font-size="8">External</text>
+        <text x="40" y="691" class="t-primary" font-size="9" font-weight="600">Legend</text>
+        <rect x="40" y="696" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+        <text x="60" y="704" class="t-muted" font-size="8">Backend</text>
+        <rect x="133" y="696" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+        <text x="153" y="704" class="t-muted" font-size="8">Cloud</text>
+        <rect x="216" y="696" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+        <text x="236" y="704" class="t-muted" font-size="8">Message bus</text>
+        <rect x="329" y="696" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+        <text x="349" y="704" class="t-muted" font-size="8">Database</text>
+        <rect x="427" y="696" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+        <text x="447" y="704" class="t-muted" font-size="8">External</text>
       </svg>
     </div>
 
@@ -899,22 +670,22 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot emerald"></div>
-          <h3>Nucleo</h3>
+          <h3>Dominio</h3>
         </div>
         <ul>
-          <li>&bull; Domain/application ainda reservados para regras futuras</li>
-          <li>&bull; Persistence define contratos sem fornecedor concreto</li>
+          <li>&bull; User, Task, Goal e Reminder ja modelados</li>
+          <li>&bull; Date e TimeSlot ficam livres de infraestrutura</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <div class="card-dot cyan"></div>
-          <h3>Inicializacao</h3>
+          <div class="card-dot violet"></div>
+          <h3>Persistencia</h3>
         </div>
         <ul>
-          <li>&bull; main.cpp carrega AppConfig via variaveis de ambiente</li>
-          <li>&bull; PostgreSQL so conecta quando VP_USE_POSTGRES=true</li>
+          <li>&bull; Database e Transaction continuam vendor-neutral</li>
+          <li>&bull; User/Task/Goal/ReminderRepository sao contratos</li>
         </ul>
       </div>
 
@@ -925,15 +696,14 @@
         </div>
         <ul>
           <li>&bull; Adapter opcional via VIRTUAL_PLANNER_WITH_POSTGRES=ON</li>
-          <li>&bull; libpqxx fica restrito a infrastructure/postgres</li>
+          <li>&bull; Ainda sem schema ou repositories concretos</li>
         </ul>
       </div>
     </div>
 
     <!-- Footer -->
     <p class="footer">
-      Architecture diagram &bull; Built with Archify<span class="no-print"> &bull; Press <kbd>T</kbd> for theme and
-        <kbd>E</kbd> for export</span>
+      Architecture diagram &bull; Built with Archify<span class="no-print"> &bull; Press <kbd>T</kbd> for theme and <kbd>E</kbd> for export</span>
     </p>
   </div>
 
@@ -956,14 +726,14 @@
         try { return localStorage.getItem(STORAGE_KEY); } catch (_) { return null; }
       }
       function writeStored(value) {
-        try { localStorage.setItem(STORAGE_KEY, value); } catch (_) { }
+        try { localStorage.setItem(STORAGE_KEY, value); } catch (_) {}
       }
       function urlOverride() {
         // URL param wins (useful for deterministic screenshots / share links)
         try {
           var param = new URLSearchParams(window.location.search).get('theme');
           if (param === 'light' || param === 'dark') return param;
-        } catch (_) { }
+        } catch (_) {}
         return null;
       }
 
@@ -1001,7 +771,7 @@
         };
         if (media.addEventListener) media.addEventListener('change', onChange);
         else if (media.addListener) media.addListener(onChange);
-      } catch (_) { }
+      } catch (_) {}
 
       return { toggle: toggle };
     })();
@@ -1027,8 +797,8 @@
           .replace(/\s+Diagram$/i, '')
           .trim();
         return title.replace(/[^a-z0-9_\-]+/gi, '-')
-          .toLowerCase()
-          .replace(/^-+|-+$/g, '') || 'diagram';
+                    .toLowerCase()
+                    .replace(/^-+|-+$/g, '') || 'diagram';
       }
 
       function currentBg() {
@@ -1125,7 +895,7 @@
         // serialized SVG, so url()-sourced faces would just hang.
         var fontFallback = [400, 500, 600, 700].map(function (w) {
           return "@font-face { font-family: 'JetBrains Mono'; font-weight: " + w +
-            "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
+                 "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
         }).join('\n');
 
         var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
@@ -1240,7 +1010,7 @@
             ctx.drawImage(img, 0, 0);
             URL.revokeObjectURL(svgUrl);
             var mime = format === 'jpeg' ? 'image/jpeg' :
-              format === 'webp' ? 'image/webp' : 'image/png';
+                       format === 'webp' ? 'image/webp' : 'image/png';
             var quality = format === 'png' ? undefined : 0.95;
             canvas.toBlob(function (blob) {
               if (!blob) reject(new Error('toBlob returned null for ' + format));
@@ -1264,8 +1034,8 @@
       // ---- Clipboard support ----------------------------------------------
       function canCopyImage() {
         return typeof ClipboardItem !== 'undefined' &&
-          navigator.clipboard &&
-          typeof navigator.clipboard.write === 'function';
+               navigator.clipboard &&
+               typeof navigator.clipboard.write === 'function';
       }
 
       // ---- Raster format detection ----------------------------------------
@@ -1349,7 +1119,7 @@
       //   Esc closes + returns focus to trigger; Tab closes.
       menu.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
-        if (e.key === 'Tab') { close(false); return; }
+        if (e.key === 'Tab')    { close(false); return; }
 
         var available = items().filter(function (i) { return !i.disabled; });
         var current = available.indexOf(document.activeElement);
@@ -1378,11 +1148,11 @@
         close(true);
         return (format === 'svg'
           ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
-            download(new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' }), base + '.svg');
-          })
+              download(new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' }), base + '.svg');
+            })
           : rasterize(format).then(function (blob) {
-            download(blob, base + '.' + format);
-          })
+              download(blob, base + '.' + format);
+            })
         ).catch(function (err) {
           console.error(err);
           alert('Export failed: ' + (err && err.message ? err.message : format));
@@ -1441,7 +1211,7 @@
             setTimeout(openWhenReady, 200);
           }
         }
-      } catch (_) { }
+      } catch (_) {}
     })();
 
     /* ============================================================
@@ -1464,5 +1234,4 @@
     });
   </script>
 </body>
-
 </html>
