@@ -26,7 +26,8 @@ add_library(virtual_planner_core
     src/core/app_config.cpp
 
     # Domain
-    src/domain/entities/reminder.cpp 
+    src/domain/entities/user.cpp
+    src/domain/entities/reminder.cpp
     src/domain/value_objects/date.cpp
     src/domain/entities/task.cpp
     src/domain/entities/goal.cpp
