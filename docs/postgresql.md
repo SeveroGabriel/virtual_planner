@@ -10,8 +10,11 @@ PostgreSQL é suportado por adapter concreto em `infrastructure/postgres`. O nú
 
 - `Database` não conhece PostgreSQL.
 - `Transaction` não conhece PostgreSQL.
+- Os contratos de repositório de domínio não conhecem PostgreSQL.
 - `PostgresDatabase` encapsula `libpqxx`.
 - `PostgresTransaction` encapsula `pqxx::work`.
+
+As entidades de domínio iniciais já existem, mas ainda não há schema SQL, migrations ou repositórios PostgreSQL concretos para persisti-las.
 
 ## Dependência Escolhida
 
@@ -120,5 +123,5 @@ O teste de integração valida conexão real, `commit()`, `rollback()` e `shutdo
 
 - Sem pool de conexões.
 - Sem schema real.
-- Sem repositórios concretos.
+- Sem repositórios PostgreSQL concretos para entidades de domínio.
 - Sem migrations aplicadas automaticamente.

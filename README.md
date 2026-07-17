@@ -1,6 +1,6 @@
 # Virtual Planner
 
-Virtual Planner é um projeto acadêmico em C++20 que fornece uma fundação modular simples para um backend. A base atual define estrutura, contratos, configuração, ciclo de vida de persistência, adapter opcional para PostgreSQL e testes automatizados, mas ainda não implementa regras específicas de produto ou de domínio.
+Virtual Planner é um projeto acadêmico em C++20 que fornece uma fundação modular simples para um backend de planejamento pessoal. A base atual define estrutura, contratos, configuração, ciclo de vida de persistência, adapter opcional para PostgreSQL, testes automatizados e uma primeira modelagem de domínio para usuários, tarefas, metas e lembretes.
 
 A proposta é manter a arquitetura clara sem antecipar complexidade: o núcleo continua independente de fornecedor de banco, e detalhes concretos ficam em `infrastructure`.
 
@@ -11,6 +11,7 @@ A proposta é manter a arquitetura clara sem antecipar complexidade: o núcleo c
 - Compilar o projeto com CMake usando C++20.
 - Manter o núcleo vendor-neutral, sem dependência direta de PostgreSQL.
 - Usar PostgreSQL por meio de adapter concreto opcional em `infrastructure/postgres`.
+- Modelar o domínio inicial de planejamento sem acoplar entidades a banco de dados ou interface.
 - Manter testes rápidos, locais e independentes de banco real por padrão.
 
 ## Requisitos
@@ -106,6 +107,8 @@ Testes atuais no build padrão:
 - `database_test`
 - `postgres_config_test`
 
+Os testes atuais cobrem configuração e primitivas de persistência. Testes unitários específicos para entidades, value objects e regras de domínio ainda devem ser adicionados conforme os módulos evoluírem.
+
 Teste de integração PostgreSQL, disponível apenas no build com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`:
 
 ```bash
@@ -122,6 +125,9 @@ O teste de integração usa `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`
 │   ├── application
 │   ├── core
 │   ├── domain
+│   │   ├── entities
+│   │   ├── enums
+│   │   └── value_objects
 │   ├── infrastructure
 │   │   ├── config
 │   │   └── postgres
@@ -132,6 +138,9 @@ O teste de integração usa `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`
 │   ├── application
 │   ├── core
 │   ├── domain
+│   │   ├── entities
+│   │   ├── enums
+│   │   └── value_objects
 │   ├── infrastructure
 │   │   ├── config
 │   │   └── postgres
@@ -151,6 +160,7 @@ O teste de integração usa `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`
 
 - `persistence::Database`: abstração vendor-neutral para ciclo de vida de persistência.
 - `persistence::Transaction`: contrato mínimo para `commit()` e `rollback()`.
+- `persistence::*Repository`: contratos de repositório para entidades de domínio, ainda sem implementação concreta de banco.
 - `infrastructure::postgres::PostgresConfig`: configuração externa e segura para conexão PostgreSQL.
 - `infrastructure::postgres::PostgresDatabase`: adapter concreto baseado em `libpqxx`, compilado apenas com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
 - `infrastructure::postgres::PostgresTransaction`: transação PostgreSQL com rollback automático no destrutor se não houver `commit()`.
@@ -159,7 +169,17 @@ Regra principal: dependências devem apontar para dentro. `domain`, `application
 
 ## Migrações
 
-O diretório `migrations/` está reservado para SQL versionado. Ainda não há schema inicial porque o projeto não possui entidades de domínio definidas.
+O diretório `migrations/` está reservado para SQL versionado. Ainda não há schema inicial porque as entidades atuais ainda não foram mapeadas para persistência real nem conectadas a casos de uso completos.
+
+## Domínio Inicial
+
+A camada `domain` contém uma primeira base para planejamento pessoal:
+
+- Entidades: `User`, `Task`, `Goal` e `Reminder`.
+- Value objects: `Date` e `TimeSlot`.
+- Enums: `Category`, `Priority`, `TaskStatus`, `GoalStatus`, `GoalPeriod`, `ReminderType`, `ReminderRecurrence` e `Shift`.
+
+Essas classes representam o modelo inicial do domínio. Services de aplicação, regras completas de fluxo, interface de usuário, schema SQL e repositories concretos ainda devem ser implementados pelos próximos módulos.
 
 ## Documentação
 
@@ -178,15 +198,16 @@ O diretório `migrations/` está reservado para SQL versionado. Ainda não há s
 - Adapter PostgreSQL: implementado como feature opcional.
 - Transações PostgreSQL: implementadas via `PostgresTransaction`.
 - Banco de dados real: disponível apenas quando `libpqxx` estiver instalado e a flag estiver habilitada.
-- Regras de negócio: ainda não implementadas.
-- Repositórios concretos de domínio: ainda não implementados porque não há entidades reais.
-- Schema/migrations reais: ainda não implementados porque não há modelo de domínio definido.
+- Domínio inicial: entidades, value objects e enums de usuários, tarefas, metas e lembretes implementados.
+- Contratos de repositório de domínio: definidos em `persistence`, ainda sem implementação concreta.
+- Services e casos de uso: ainda não implementados.
+- Schema/migrations reais: ainda não implementados porque não há mapeamento persistente definido.
 
 ## Próximos Passos
 
 1. Instalar `libpqxx` no ambiente de desenvolvimento ou CI para validar o build com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
 2. Executar o teste de integração com PostgreSQL local via Docker.
-3. Implementar o primeiro caso de uso em `application` quando a regra do trabalho estiver definida.
-4. Adicionar entidades em `domain` apenas quando houver regras de negócio reais.
-5. Criar repositórios PostgreSQL específicos para entidades reais, usando queries parametrizadas.
+3. Implementar services e casos de uso em `application` para tarefas, metas, lembretes e relatórios.
+4. Adicionar testes unitários para entidades, value objects e regras de domínio.
+5. Criar repositórios PostgreSQL específicos quando houver casos de uso persistentes, usando queries parametrizadas.
 6. Adicionar scripts SQL versionados em `migrations/` quando houver schema real.

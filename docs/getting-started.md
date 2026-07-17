@@ -22,6 +22,8 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+Os testes padrão atuais cobrem configuração da aplicação, ciclo de vida base de persistência e configuração PostgreSQL. Testes unitários específicos do domínio devem ser adicionados junto com a evolução das entidades, value objects e services.
+
 ## Execução Padrão
 
 ```bash

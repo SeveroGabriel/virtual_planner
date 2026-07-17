@@ -113,5 +113,5 @@ Resultado: falhou corretamente porque o ambiente não possui `libpqxx` nem `pkg-
 - Instalar `libpqxx` no ambiente local ou CI.
 - Validar build com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
 - Subir PostgreSQL local via Docker e executar `postgres_integration_test`.
-- Criar schema e migrations apenas quando houver entidades reais.
-- Criar repositórios concretos apenas quando houver casos de uso reais.
+- Criar schema e migrations apenas quando o modelo persistente das entidades for definido.
+- Criar repositórios PostgreSQL concretos apenas quando houver casos de uso persistentes.

@@ -332,5 +332,5 @@ Antes de alterar, leia os arquivos relevantes e proponha a menor mudança corret
 - Nenhum segredo foi versionado.
 - `pqxx` aparece apenas em `infrastructure/postgres`.
 - Documentação foi atualizada quando necessário.
-- Não foram criadas entidades, migrations ou repositórios fictícios.
+- Não foram criadas entidades, migrations ou repositórios fictícfios.
 - A mudança respeita o escopo acadêmico e evita overengineering.
