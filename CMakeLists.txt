@@ -41,6 +41,13 @@ add_library(virtual_planner_core
     src/domain/entities/goal.cpp
     src/domain/value_objects/time_slot.cpp
 
+    # Application
+    src/application/goal/create_goal_use_case.cpp
+    src/application/goal/update_goal_use_case.cpp
+    src/application/goal/delete_goal_use_case.cpp
+    src/application/goal/list_goals_use_case.cpp
+    src/application/goal/change_goal_status_use_case.cpp
+
     # Infrastructure
     src/infrastructure/config/environment_config_loader.cpp
     src/infrastructure/postgres/postgres_config.cpp
@@ -111,6 +118,31 @@ add_executable(postgres_config_test tests/unit/infrastructure/postgres/postgres_
 target_link_libraries(postgres_config_test PRIVATE virtual_planner_core)
 virtual_planner_enable_warnings(postgres_config_test)
 add_test(NAME postgres_config_test COMMAND postgres_config_test)
+
+add_executable(create_goal_use_case_test tests/unit/application/goal/create_goal_use_case_test.cpp)
+target_link_libraries(create_goal_use_case_test PRIVATE virtual_planner_core)
+virtual_planner_enable_warnings(create_goal_use_case_test)
+add_test(NAME create_goal_use_case_test COMMAND create_goal_use_case_test)
+
+add_executable(update_goal_use_case_test tests/unit/application/goal/update_goal_use_case_test.cpp)
+target_link_libraries(update_goal_use_case_test PRIVATE virtual_planner_core)
+virtual_planner_enable_warnings(update_goal_use_case_test)
+add_test(NAME update_goal_use_case_test COMMAND update_goal_use_case_test)
+
+add_executable(delete_goal_use_case_test tests/unit/application/goal/delete_goal_use_case_test.cpp)
+target_link_libraries(delete_goal_use_case_test PRIVATE virtual_planner_core)
+virtual_planner_enable_warnings(delete_goal_use_case_test)
+add_test(NAME delete_goal_use_case_test COMMAND delete_goal_use_case_test)
+
+add_executable(list_goals_use_case_test tests/unit/application/goal/list_goals_use_case_test.cpp)
+target_link_libraries(list_goals_use_case_test PRIVATE virtual_planner_core)
+virtual_planner_enable_warnings(list_goals_use_case_test)
+add_test(NAME list_goals_use_case_test COMMAND list_goals_use_case_test)
+
+add_executable(change_goal_status_use_case_test tests/unit/application/goal/change_goal_status_use_case_test.cpp)
+target_link_libraries(change_goal_status_use_case_test PRIVATE virtual_planner_core)
+virtual_planner_enable_warnings(change_goal_status_use_case_test)
+add_test(NAME change_goal_status_use_case_test COMMAND change_goal_status_use_case_test)
 
 if(VIRTUAL_PLANNER_WITH_POSTGRES)
   add_executable(postgres_integration_test tests/integration/postgres/postgres_integration_test.cpp)
