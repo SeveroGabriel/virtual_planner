@@ -34,12 +34,17 @@ add_library(virtual_planner_core
     src/domain/enums/shift.cpp
 
     # Domain
+
+    # Value Objects
+    src/domain/value_objects/time_slot.cpp
+    src/domain/value_objects/date.cpp
+
+    #Entities
     src/domain/entities/user.cpp
     src/domain/entities/reminder.cpp
-    src/domain/value_objects/date.cpp
     src/domain/entities/task.cpp
     src/domain/entities/goal.cpp
-    src/domain/value_objects/time_slot.cpp
+    
 
     # Application
     src/application/goal/create_goal_use_case.cpp
@@ -51,7 +56,7 @@ add_library(virtual_planner_core
     # Infrastructure
     src/infrastructure/config/environment_config_loader.cpp
     src/infrastructure/postgres/postgres_config.cpp
-
+    
     # Persistence
     src/persistence/database.cpp
 
@@ -93,6 +98,8 @@ if(VIRTUAL_PLANNER_WITH_POSTGRES)
     PRIVATE
       src/infrastructure/postgres/postgres_database.cpp
       src/infrastructure/postgres/postgres_transaction.cpp
+      src/infrastructure/postgres/postgres_goal_repository.cpp
+
   )
   target_compile_definitions(virtual_planner_core PUBLIC VIRTUAL_PLANNER_WITH_POSTGRES)
   target_link_libraries(virtual_planner_core PUBLIC ${VIRTUAL_PLANNER_PQXX_TARGET})
@@ -149,4 +156,24 @@ if(VIRTUAL_PLANNER_WITH_POSTGRES)
   target_link_libraries(postgres_integration_test PRIVATE virtual_planner_core)
   virtual_planner_enable_warnings(postgres_integration_test)
   add_test(NAME postgres_integration_test COMMAND postgres_integration_test)
+
+  add_executable(
+    postgres_goal_repository_test
+    tests/integration/postgres/postgres_goal_repository_test.cpp
+)
+
+target_link_libraries(
+    postgres_goal_repository_test
+    PRIVATE virtual_planner_core
+)
+
+virtual_planner_enable_warnings(
+    postgres_goal_repository_test
+)
+
+add_test(
+    NAME postgres_goal_repository_test
+    COMMAND postgres_goal_repository_test
+)
+    
 endif()
