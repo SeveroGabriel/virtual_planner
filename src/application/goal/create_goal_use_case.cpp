@@ -13,7 +13,7 @@ CreateGoalUseCase::CreateGoalUseCase(
 {
 }
 
-void CreateGoalUseCase::execute(
+std::uint64_t CreateGoalUseCase::execute(
     const CreateGoalRequest& request)
 {
     if (request.description.empty())
@@ -29,7 +29,8 @@ void CreateGoalUseCase::execute(
         domain::GoalStatus::InProgress,
         request.period);
 
-    repository_.save(goal);
-}
+    const auto id = repository_.save(goal);
 
-} // namespace virtual_planner::application
+    return id;
+}
+} // namespace virtual_planner::application     

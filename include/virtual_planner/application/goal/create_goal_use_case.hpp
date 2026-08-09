@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 #include "virtual_planner/domain/enums/category.hpp"
@@ -21,7 +22,8 @@ public:
     explicit CreateGoalUseCase(
         persistence::GoalRepository& repository);
 
-    void execute(const CreateGoalRequest& request);
+    [[nodiscard]] std::uint64_t execute(
+        const CreateGoalRequest& request);
 
 private:
     persistence::GoalRepository& repository_;

@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
 #include "virtual_planner/persistence/goal_repository.hpp"
@@ -15,7 +16,7 @@ public:
     explicit PostgresGoalRepository(
         PostgresDatabase& database);
 
-    void save(const domain::Goal& goal) override;
+    std::uint64_t save(const domain::Goal& goal) override;
 
     void update(const domain::Goal& goal) override;
 

@@ -14,7 +14,7 @@ class GoalRepository
 public:
     virtual ~GoalRepository() = default;
 
-    virtual void save(const domain::Goal& goal) = 0;
+    virtual std::uint64_t save(const domain::Goal& goal) = 0;
 
     virtual void update(const domain::Goal& goal) = 0;
     

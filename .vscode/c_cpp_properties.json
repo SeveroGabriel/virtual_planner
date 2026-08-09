@@ -3,7 +3,7 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/build/compile_commands.json"
             ],
             "defines": [],
             "cStandard": "c17",

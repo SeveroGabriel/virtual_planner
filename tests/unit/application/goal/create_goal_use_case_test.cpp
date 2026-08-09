@@ -17,7 +17,9 @@ int main()
         domain::Category::Study,
         domain::GoalPeriod::Weekly};
 
-    create.execute(request);
+    const auto id = create.execute(request);
+
+    assert(id != 0);
 
     auto goals = repository.find_all();
 

@@ -12,10 +12,19 @@ namespace virtual_planner::tests {
 class FakeGoalRepository final : public persistence::GoalRepository
 {
 public:
-    void save(const domain::Goal& goal) override
-    {
-        goals_.push_back(goal);
-    }
+    std::uint64_t save(const domain::Goal& goal) override
+{
+    const auto id = next_id_++;
+
+    goals_.emplace_back(
+        id,
+        goal.description(),
+        goal.category(),
+        goal.status(),
+        goal.period());
+
+    return id;
+}
 
     void update(const domain::Goal& goal) override
     {
@@ -61,7 +70,9 @@ public:
     }
 
 private:
+    private:
     std::vector<domain::Goal> goals_;
+    std::uint64_t next_id_ = 1;
 };
-
+    
 } // namespace virtual_planner::tests

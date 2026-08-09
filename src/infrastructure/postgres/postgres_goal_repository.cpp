@@ -12,29 +12,34 @@ PostgresGoalRepository::PostgresGoalRepository(
 {
 }
 
-void PostgresGoalRepository::save(
+std::uint64_t PostgresGoalRepository::save(
     const domain::Goal& goal)
     
 {
     pqxx::work transaction(database_.connection());
 
-    transaction.exec_params(
-        R"(
-        INSERT INTO goals
-        (
-            description,
-            category,
-            status,
-            period
-        )
-        VALUES ($1,$2,$3,$4)
-        )",
-        goal.description(),
-        to_string(goal.category()),
-        to_string(goal.status()),
-        to_string(goal.period()));
+    auto result = transaction.exec_params(
+    R"(
+    INSERT INTO goals
+    (
+        description,
+        category,
+        status,
+        period
+    )
+    VALUES ($1,$2,$3,$4)
+    RETURNING id
+    )",
+    goal.description(),
+    to_string(goal.category()),
+    to_string(goal.status()),
+    to_string(goal.period()));
+
+    const auto id = result.front()["id"].as<std::uint64_t>();
 
     transaction.commit();
+
+    return id;
 
 }
 
@@ -44,20 +49,21 @@ void PostgresGoalRepository::update(
     pqxx::work transaction(database_.connection());
 
     transaction.exec_params(
-        R"(
-        UPDATE goals
-        SET
-            description=$1,
-            category=$2,
-            status=$3,
-            period=$4
-        WHERE id=$5
-        )",
-        goal.description(),
-        to_string(goal.category()),
-        to_string(goal.status()),
-        to_string(goal.period()),
-        goal.id());
+    R"(
+    UPDATE goals
+    SET
+        description=$1,
+        category=$2,
+        status=$3,
+        period=$4,
+        updated_at=CURRENT_TIMESTAMP
+    WHERE id=$5
+    )",
+    goal.description(),
+    to_string(goal.category()),
+    to_string(goal.status()),
+    to_string(goal.period()),
+    goal.id());
 
     transaction.commit();
 }
@@ -65,7 +71,7 @@ void PostgresGoalRepository::update(
 std::optional<domain::Goal>
 PostgresGoalRepository::find_by_id(std::uint64_t id)
 {
-    pqxx::work transaction(database_.connection());
+    pqxx::read_transaction transaction(database_.connection());
 
     auto result = transaction.exec_params(
         R"(
@@ -91,11 +97,11 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
     return domain::Goal(
         row["id"].as<std::uint64_t>(),
         row["description"].as<std::string>(),
-        category_from_string(
+        domain::category_from_string(
             row["category"].as<std::string>()),
-        goal_status_from_string(
+        domain::goal_status_from_string(
             row["status"].as<std::string>()),
-        goal_period_from_string(
+        domain::goal_period_from_string(
             row["period"].as<std::string>())
     );
 }
@@ -103,7 +109,7 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
 std::vector<domain::Goal>
 PostgresGoalRepository::find_all()
 {
-    pqxx::work transaction(database_.connection());
+    pqxx::read_transaction transaction(database_.connection());
 
     auto result = transaction.exec(
         R"(
@@ -127,11 +133,11 @@ PostgresGoalRepository::find_all()
         goals.emplace_back(
             row["id"].as<std::uint64_t>(),
             row["description"].as<std::string>(),
-            category_from_string(
+            domain::category_from_string(
                 row["category"].as<std::string>()),
-            goal_status_from_string(
+            domain::goal_status_from_string(
                 row["status"].as<std::string>()),
-            goal_period_from_string(
+            domain::goal_period_from_string(
                 row["period"].as<std::string>())
         );
     }
