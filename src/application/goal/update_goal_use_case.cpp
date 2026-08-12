@@ -1,0 +1,33 @@
+#include "virtual_planner/application/goal/update_goal_use_case.hpp"
+
+#include <stdexcept>
+
+namespace virtual_planner::application {
+
+UpdateGoalUseCase::UpdateGoalUseCase(
+    persistence::GoalRepository& repository)
+    : repository_(repository)
+{
+}
+
+void UpdateGoalUseCase::execute(
+    const UpdateGoalRequest& request)
+{
+    auto goal = repository_.find_by_id(request.id);
+
+    if (!goal.has_value())
+    {
+        throw std::runtime_error(
+            "Goal not found.");
+    }
+
+    goal->update_description(request.description);
+
+    goal->change_category(request.category);
+
+    goal->change_period(request.period);
+
+    repository_.update(*goal);
+}
+
+} // namespace virtual_planner::application
