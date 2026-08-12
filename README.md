@@ -1,47 +1,44 @@
 # Virtual Planner
 
-Virtual Planner é um projeto acadêmico em C++20 que fornece uma fundação modular simples para um backend de planejamento pessoal. A base atual define estrutura, contratos, configuração, ciclo de vida de persistência, adapter opcional para PostgreSQL, testes automatizados e uma primeira modelagem de domínio para usuários, tarefas, metas e lembretes.
+Virtual Planner é um projeto acadêmico desenvolvido em C++20 para ajudar no planejamento pessoal.
 
-A proposta é manter a arquitetura clara sem antecipar complexidade: o núcleo continua independente de fornecedor de banco, e detalhes concretos ficam em `infrastructure`.
+O projeto possui uma estrutura inicial para usuários, tarefas, metas e lembretes. Também oferece suporte opcional ao PostgreSQL.
 
 ## Objetivos
 
-- Manter o código simples o suficiente para um projeto de faculdade.
-- Separar domínio, aplicação, infraestrutura, persistência, interfaces e código compartilhado.
-- Compilar o projeto com CMake usando C++20.
-- Manter o núcleo vendor-neutral, sem dependência direta de PostgreSQL.
-- Usar PostgreSQL por meio de adapter concreto opcional em `infrastructure/postgres`.
-- Modelar o domínio inicial de planejamento sem acoplar entidades a banco de dados ou interface.
-- Manter testes rápidos, locais e independentes de banco real por padrão.
+- Manter o código simples e organizado.
+- Separar as principais partes do sistema.
+- Compilar o projeto com CMake e C++20.
+- Permitir o uso opcional do PostgreSQL.
+- Criar uma base para tarefas, metas e lembretes.
+- Manter testes que não dependam de um banco real.
 
 ## Requisitos
 
 - Compilador com suporte a C++20.
-- CMake 3.20 ou mais recente.
-- `libpqxx` somente quando `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
-- Docker opcional para subir PostgreSQL local.
+- CMake 3.20 ou superior.
+- `libpqxx` apenas para usar PostgreSQL.
+- Docker opcional.
 
-O projeto foi validado no macOS com Apple clang e CMake 4.4.0.
+## Compilação
 
-## Build Sem PostgreSQL
+### Sem PostgreSQL
 
-Este é o caminho padrão. Ele compila o núcleo, a aplicação e os testes unitários sem exigir driver PostgreSQL instalado.
+Esta é a opção padrão:
 
 ```bash
 cmake -S . -B build
 cmake --build build
 ```
 
-## Build Com PostgreSQL
+### Com PostgreSQL
 
-Para compilar o adapter concreto `PostgresDatabase`, instale `libpqxx` e gere o build com a flag:
+É necessário instalar o `libpqxx` antes de compilar:
 
 ```bash
 cmake -S . -B build-postgres -DVIRTUAL_PLANNER_WITH_POSTGRES=ON
 cmake --build build-postgres
 ```
-
-O CMake tenta localizar `libpqxx` por pacote CMake e, se não encontrar, por `pkg-config`. Se a dependência estiver ausente, a configuração falha com mensagem explícita.
 
 ## Execução
 
@@ -51,71 +48,59 @@ Sem PostgreSQL:
 ./build/virtual_planner
 ```
 
-Com PostgreSQL compilado e habilitado em runtime:
+Com PostgreSQL:
 
 ```bash
 VP_USE_POSTGRES=true ./build-postgres/virtual_planner
 ```
 
-Se `VP_USE_POSTGRES=true` for usado em um build sem `VIRTUAL_PLANNER_WITH_POSTGRES=ON`, a aplicação encerra com erro informando que o suporte PostgreSQL não foi compilado.
+## Configuração do PostgreSQL
 
-## Configuração PostgreSQL
+As configurações são feitas por variáveis de ambiente:
 
-O adapter lê configuração externa por variáveis de ambiente:
+- `POSTGRES_HOST`: padrão `localhost`.
+- `POSTGRES_PORT`: padrão `5432`.
+- `POSTGRES_DB`: nome do banco.
+- `POSTGRES_USER`: usuário.
+- `POSTGRES_PASSWORD`: senha.
+- `POSTGRES_SSLMODE`: padrão `disable`.
 
-- `POSTGRES_HOST`, padrão `localhost`.
-- `POSTGRES_PORT`, padrão `5432`.
-- `POSTGRES_DB`, obrigatório.
-- `POSTGRES_USER`, obrigatório.
-- `POSTGRES_PASSWORD`, obrigatório.
-- `POSTGRES_SSLMODE`, padrão `disable`.
-- `POSTGRES_CONNECT_TIMEOUT`, padrão `5`.
-- `POSTGRES_APPLICATION_NAME`, padrão `virtual-planner`.
-
-Use `.env.example` como referência. O arquivo `.env` real é ignorado pelo Git e não deve conter segredos versionados.
+Use o arquivo `.env.example` como referência. Não envie o arquivo `.env` para o Git.
 
 ## Docker
 
-Para subir PostgreSQL local:
+Para iniciar o PostgreSQL localmente:
 
 ```bash
 docker compose up -d postgres
-docker compose ps
 ```
 
 Comandos úteis:
 
 ```bash
+docker compose ps
 docker compose logs -f postgres
 docker compose stop
 docker compose down
 ```
 
-Use `docker compose down -v` apenas quando quiser apagar também o volume de dados local.
+Use `docker compose down -v` somente para apagar também os dados locais.
 
 ## Testes
 
-Testes unitários padrão:
+Testes padrão:
 
 ```bash
 ctest --test-dir build --output-on-failure
 ```
 
-Testes atuais no build padrão:
-
-- `app_config_test`
-- `database_test`
-- `postgres_config_test`
-
-Os testes atuais cobrem configuração e primitivas de persistência. Testes unitários específicos para entidades, value objects e regras de domínio ainda devem ser adicionados conforme os módulos evoluírem.
-
-Teste de integração PostgreSQL, disponível apenas no build com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`:
+Teste de integração com PostgreSQL:
 
 ```bash
 ctest --test-dir build-postgres --output-on-failure -R postgres_integration_test
 ```
 
-O teste de integração usa `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`. Se essas variáveis não estiverem definidas, ele é pulado com mensagem clara.
+O teste de integração precisa das variáveis `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`.
 
 ## Estrutura do Projeto
 
@@ -135,79 +120,73 @@ O teste de integração usa `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`
 │   ├── persistence
 │   └── shared
 ├── src
-│   ├── application
-│   ├── core
-│   ├── domain
-│   │   ├── entities
-│   │   ├── enums
-│   │   └── value_objects
-│   ├── infrastructure
-│   │   ├── config
-│   │   └── postgres
-│   ├── persistence
-│   ├── shared
-│   └── main.cpp
 ├── tests
-│   ├── integration
-│   └── unit
 ├── docs
 ├── migrations
 ├── docker-compose.yml
 └── CMakeLists.txt
 ```
 
-## Arquitetura De Persistência
+## Arquitetura
 
-- `persistence::Database`: abstração vendor-neutral para ciclo de vida de persistência.
+O projeto está dividido em camadas:
+
+- `domain`: entidades e regras do sistema.
+- `application`: futuros serviços e casos de uso.
+- `interfaces`: contratos usados pelas diferentes partes do projeto.
+- `persistence`: contratos para banco de dados e repositórios.
+- `infrastructure`: implementações externas, como configuração e PostgreSQL.
+- `core` e `shared`: configurações, erros e recursos compartilhados.
+- `main.cpp`: inicia e configura a aplicação.
+
+O código principal não depende diretamente do PostgreSQL. A implementação do banco fica em `infrastructure/postgres`.
+
+![Diagrama da arquitetura atual do Virtual Planner](docs/diagrams/current-architecture.webp)
+
+Outros arquivos do diagrama:
+
+- [`docs/diagrams/current-architecture.html`](docs/diagrams/current-architecture.html)
+- [`docs/diagrams/current-architecture.architecture.json`](docs/diagrams/current-architecture.architecture.json)
+
+### Contratos De Persistência
+
+- `persistence::Database`: abstração de ciclo de vida de persistência, independente de fornecedor.
 - `persistence::Transaction`: contrato mínimo para `commit()` e `rollback()`.
-- `persistence::*Repository`: contratos de repositório para entidades de domínio, ainda sem implementação concreta de banco.
-- `infrastructure::postgres::PostgresConfig`: configuração externa e segura para conexão PostgreSQL.
+- `persistence::*Repository`: contratos de repositório para as entidades de domínio, ainda sem implementação concreta de banco.
+- `infrastructure::postgres::PostgresConfig`: configuração externa da conexão PostgreSQL.
 - `infrastructure::postgres::PostgresDatabase`: adapter concreto baseado em `libpqxx`, compilado apenas com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
 - `infrastructure::postgres::PostgresTransaction`: transação PostgreSQL com rollback automático no destrutor se não houver `commit()`.
 
-Regra principal: dependências devem apontar para dentro. `domain`, `application`, `core` e `persistence::Database` não incluem headers de PostgreSQL. O driver aparece apenas na infraestrutura concreta.
-
-## Migrações
-
-O diretório `migrations/` está reservado para SQL versionado. Ainda não há schema inicial porque as entidades atuais ainda não foram mapeadas para persistência real nem conectadas a casos de uso completos.
-
 ## Domínio Inicial
 
-A camada `domain` contém uma primeira base para planejamento pessoal:
+O projeto possui as seguintes entidades:
 
-- Entidades: `User`, `Task`, `Goal` e `Reminder`.
+- `User`
+- `Task`
+- `Goal`
+- `Reminder`
+
+Também possui tipos auxiliares para datas, horários, categorias, prioridades e status:
+
 - Value objects: `Date` e `TimeSlot`.
 - Enums: `Category`, `Priority`, `TaskStatus`, `GoalStatus`, `GoalPeriod`, `ReminderType`, `ReminderRecurrence` e `Shift`.
 
-Essas classes representam o modelo inicial do domínio. Services de aplicação, regras completas de fluxo, interface de usuário, schema SQL e repositories concretos ainda devem ser implementados pelos próximos módulos.
-
 ## Documentação
 
-- `docs/architecture.md`: objetivo arquitetural, camadas, regra de dependência, persistência, configuração e dependências externas.
-- `docs/conventions.md`: convenções de linguagem, nomenclatura, arquivos, includes, testes e arquitetura.
-- `docs/getting-started.md`: comandos para compilar, testar e executar o projeto.
-- `docs/persistence-architecture.md`: detalhes da arquitetura de persistência.
-- `docs/postgresql.md`: guia de configuração, build, Docker, testes, segurança e troubleshooting do PostgreSQL.
-- `docs/adr/ADR-001-postgresql-adapter.md`: decisão arquitetural do adapter PostgreSQL.
-- `docs/postgresql-integration-report.md`: relatório da integração implementada.
+Documentos adicionais estão disponíveis na pasta `docs/`, incluindo guias de arquitetura, convenções, PostgreSQL e primeiros passos.
 
 ## Status Atual
 
-- Build com CMake sem PostgreSQL: funcionando.
-- Testes unitários sem PostgreSQL: funcionando.
-- Adapter PostgreSQL: implementado como feature opcional.
-- Transações PostgreSQL: implementadas via `PostgresTransaction`.
-- Banco de dados real: disponível apenas quando `libpqxx` estiver instalado e a flag estiver habilitada.
-- Domínio inicial: entidades, value objects e enums de usuários, tarefas, metas e lembretes implementados.
-- Contratos de repositório de domínio: definidos em `persistence`, ainda sem implementação concreta.
-- Services e casos de uso: ainda não implementados.
-- Schema/migrations reais: ainda não implementados porque não há mapeamento persistente definido.
+- Build sem PostgreSQL funcionando.
+- Testes unitários funcionando.
+- Suporte opcional ao PostgreSQL implementado.
+- Entidades iniciais implementadas, incluindo value objects e enums.
+- Contratos de repositórios definidos em `persistence`, ainda sem implementação concreta.
+- Serviços, casos de uso e banco de dados completo ainda não implementados.
 
 ## Próximos Passos
 
-1. Instalar `libpqxx` no ambiente de desenvolvimento ou CI para validar o build com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
-2. Executar o teste de integração com PostgreSQL local via Docker.
-3. Implementar services e casos de uso em `application` para tarefas, metas, lembretes e relatórios.
-4. Adicionar testes unitários para entidades, value objects e regras de domínio.
-5. Criar repositórios PostgreSQL específicos quando houver casos de uso persistentes, usando queries parametrizadas.
-6. Adicionar scripts SQL versionados em `migrations/` quando houver schema real.
+1. Adicionar serviços e casos de uso.
+2. Criar mais testes para as regras do sistema.
+3. Implementar os repositórios PostgreSQL.
+4. Criar as tabelas e migrações do banco.

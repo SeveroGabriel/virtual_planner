@@ -7,8 +7,6 @@
 - `libpqxx` apenas para compilar com PostgreSQL.
 - Docker opcional para subir PostgreSQL local.
 
-Este projeto foi validado no macOS com Apple clang e CMake 4.4.0.
-
 ## Build Padrão
 
 ```bash
