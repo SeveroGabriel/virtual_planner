@@ -18,7 +18,7 @@ std::uint64_t PostgresGoalRepository::save(
 {
     pqxx::work transaction(database_.connection());
 
-    auto result = transaction.exec_params(
+    auto result = transaction.exec(
     R"(
     INSERT INTO goals
     (
@@ -30,12 +30,14 @@ std::uint64_t PostgresGoalRepository::save(
     VALUES ($1,$2,$3,$4)
     RETURNING id
     )",
-    goal.description(),
-    to_string(goal.category()),
-    to_string(goal.status()),
-    to_string(goal.period()));
+    pqxx::params{
+        transaction,
+        goal.description(),
+        to_string(goal.category()),
+        to_string(goal.status()),
+        to_string(goal.period())});
 
-    const auto id = result.front()["id"].as<std::uint64_t>();
+    const auto id = result.one_row()["id"].as<std::uint64_t>();
 
     transaction.commit();
 
@@ -48,7 +50,7 @@ void PostgresGoalRepository::update(
 {
     pqxx::work transaction(database_.connection());
 
-    transaction.exec_params(
+    transaction.exec(
     R"(
     UPDATE goals
     SET
@@ -59,11 +61,13 @@ void PostgresGoalRepository::update(
         updated_at=CURRENT_TIMESTAMP
     WHERE id=$5
     )",
-    goal.description(),
-    to_string(goal.category()),
-    to_string(goal.status()),
-    to_string(goal.period()),
-    goal.id());
+    pqxx::params{
+        transaction,
+        goal.description(),
+        to_string(goal.category()),
+        to_string(goal.status()),
+        to_string(goal.period()),
+        goal.id()}).no_rows();
 
     transaction.commit();
 }
@@ -73,7 +77,7 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
 {
     pqxx::read_transaction transaction(database_.connection());
 
-    auto result = transaction.exec_params(
+    auto result = transaction.exec(
         R"(
             SELECT
                 id,
@@ -84,7 +88,7 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
             FROM goals
             WHERE id = $1
         )",
-        id
+        pqxx::params{transaction, id}
     );
 
     if (result.empty())
@@ -150,9 +154,9 @@ void PostgresGoalRepository::remove(
 {
     pqxx::work transaction(database_.connection());
 
-    transaction.exec_params(
+    transaction.exec(
         "DELETE FROM goals WHERE id=$1",
-        id);
+        pqxx::params{transaction, id}).no_rows();
 
     transaction.commit();
 }

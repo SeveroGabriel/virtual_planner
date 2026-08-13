@@ -1,6 +1,5 @@
-#include <cassert>
-
 #include "virtual_planner/application/goal/list_goals_use_case.hpp"
+#include "../../../support/expect.hpp"
 #include "../../persistence/fake_goal_repository.hpp"
 
 using namespace virtual_planner;
@@ -29,7 +28,7 @@ int main()
 
     auto goals = use_case.execute();
 
-    assert(goals.size() == 2);
+    VP_EXPECT(goals.size() == 2, "listing goals should return every saved goal");
 
     return 0;
 }

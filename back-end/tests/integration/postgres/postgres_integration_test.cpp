@@ -70,8 +70,8 @@ int main()
     // Assert
     {
       pqxx::work transaction(database.connection());
-      const auto row = transaction.exec1(
-          "SELECT name FROM virtual_planner_postgres_test WHERE id = 1");
+      const auto row = transaction.exec(
+          "SELECT name FROM virtual_planner_postgres_test WHERE id = 1").one_row();
       expect(row[0].as<std::string>() == "committed",
              "committed row should be visible");
       transaction.commit();
@@ -88,8 +88,8 @@ int main()
     // Assert
     {
       pqxx::work transaction(database.connection());
-      const auto row = transaction.exec1(
-          "SELECT COUNT(*) FROM virtual_planner_postgres_test WHERE id = 2");
+      const auto row = transaction.exec(
+          "SELECT COUNT(*) FROM virtual_planner_postgres_test WHERE id = 2").one_row();
       expect(row[0].as<int>() == 0, "rolled back row should not be visible");
       transaction.commit();
     }

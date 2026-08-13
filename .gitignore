@@ -1,6 +1,17 @@
 build/
 cmake-build-*/
 compile_commands.json
+
+# Backend (C++/CMake)
+back-end/.cache/
+back-end/build/
+back-end/build-*/
+back-end/cmake-build-*/
+
+# Frontend (Node/Vite)
+front-end/node_modules/
+front-end/dist/
+
 *.o
 *.obj
 *.a

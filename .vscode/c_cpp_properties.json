@@ -3,8 +3,9 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/build/compile_commands.json"
+                "${workspaceFolder}/back-end/include/**"
             ],
+            "compileCommands": "${workspaceFolder}/back-end/build/compile_commands.json",
             "defines": [],
             "cStandard": "c17",
             "cppStandard": "gnu++20",

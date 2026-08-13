@@ -1,7 +1,6 @@
-#include <cassert>
-
 #include "virtual_planner/application/goal/delete_goal_use_case.hpp"
 
+#include "../../../support/expect.hpp"
 #include "../../persistence/fake_goal_repository.hpp"
 
 using namespace virtual_planner;
@@ -22,7 +21,7 @@ int main()
 
     remove.execute(1);
 
-    assert(repository.find_all().empty());
+    VP_EXPECT(repository.find_all().empty(), "repository should be empty after deleting the only goal");
 
     return 0;
 }

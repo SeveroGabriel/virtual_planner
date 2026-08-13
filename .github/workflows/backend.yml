@@ -1,0 +1,131 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - "back-end/**"
+      - "scripts/db-migrate.sh"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "back-end/**"
+      - "scripts/db-migrate.sh"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  build-and-test:
+    name: Build and test (Debug + Release, sem PostgreSQL)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Debug primeiro: build padrão sem otimizações.
+      - name: Configure (Debug)
+        run: cmake -S back-end -B back-end/build-debug -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build (Debug)
+        run: cmake --build back-end/build-debug
+
+      - name: Test (Debug)
+        run: ctest --test-dir back-end/build-debug --output-on-failure
+
+      # Release é essencial: com NDEBUG, asserts somem e alguns bugs só
+      # aparecem aqui. Nunca pular este passo.
+      - name: Configure (Release)
+        run: cmake -S back-end -B back-end/build-release -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build (Release)
+        run: cmake --build back-end/build-release
+
+      - name: Test (Release)
+        run: ctest --test-dir back-end/build-release --output-on-failure
+
+  postgres-integration:
+    name: Build and test com PostgreSQL (migrations + integração real)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: virtual_planner
+          POSTGRES_USER: virtual_planner
+          POSTGRES_PASSWORD: change-me
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U virtual_planner -d virtual_planner"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Credenciais de teste do service container efêmero do CI, mesmos
+      # valores padrão já usados em docker-compose.yml e back-end/.env.example.
+      # Não é segredo real: o banco existe só durante o job e é descartado.
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: virtual_planner
+      POSTGRES_USER: virtual_planner
+      POSTGRES_PASSWORD: change-me
+      VP_USE_POSTGRES: "true"
+      # Mesma versão de libpqxx usada no desenvolvimento local.
+      LIBPQXX_VERSION: "8.0.2"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # O adapter usa a API libpqxx 8.x: pqxx::params{transaction, ...},
+      # result::one_row() e result::no_rows(). Essas APIs NÃO existem no
+      # libpqxx-dev que o apt do Ubuntu fornece (7.x no Noble), então
+      # `apt-get install libpqxx-dev` faria o build falhar aqui.
+      # Por isso o libpqxx é compilado a partir do código-fonte, fixado na
+      # mesma versão usada no desenvolvimento local (8.0.2), garantindo que
+      # CI e máquina de dev exercitem exatamente a mesma API.
+      # Se algum dia o adapter voltar a uma API compatível com o pacote do
+      # apt, este passo pode ser trocado por `apt-get install libpqxx-dev`.
+      - name: Install PostgreSQL client and build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev postgresql-client cmake g++ python3
+
+      - name: Cache libpqxx ${{ env.LIBPQXX_VERSION }}
+        id: cache-libpqxx
+        uses: actions/cache@v4
+        with:
+          path: /opt/libpqxx
+          key: libpqxx-${{ env.LIBPQXX_VERSION }}-${{ runner.os }}-ubuntu-24.04
+
+      - name: Build libpqxx ${{ env.LIBPQXX_VERSION }} from source
+        if: steps.cache-libpqxx.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "${LIBPQXX_VERSION}" \
+            https://github.com/jtv/libpqxx.git /tmp/libpqxx
+          cmake -S /tmp/libpqxx -B /tmp/libpqxx/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/opt/libpqxx \
+            -DBUILD_SHARED_LIBS=ON \
+            -DSKIP_BUILD_TEST=ON
+          cmake --build /tmp/libpqxx/build --parallel
+          cmake --install /tmp/libpqxx/build
+
+      - name: Expose libpqxx to the build
+        run: |
+          echo "CMAKE_PREFIX_PATH=/opt/libpqxx:${CMAKE_PREFIX_PATH:-}" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=/opt/libpqxx/lib:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=/opt/libpqxx/lib/pkgconfig:${PKG_CONFIG_PATH:-}" >> "$GITHUB_ENV"
+
+      - name: Configure (Release, com PostgreSQL)
+        run: >
+          cmake -S back-end -B back-end/build
+          -DCMAKE_BUILD_TYPE=Release
+          -DVIRTUAL_PLANNER_WITH_POSTGRES=ON
+
+      - name: Build
+        run: cmake --build back-end/build
+
+      - name: Apply database migrations
+        run: ./scripts/db-migrate.sh
+
+      - name: Run tests (unitários + integração PostgreSQL real)
+        run: ctest --test-dir back-end/build --output-on-failure

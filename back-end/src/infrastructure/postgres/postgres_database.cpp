@@ -54,7 +54,7 @@ namespace virtual_planner::infrastructure::postgres
       }
 
       pqxx::work transaction(*connection_);
-      transaction.exec1("SELECT 1");
+      transaction.exec("SELECT 1").one_row();
       transaction.commit();
     }
     catch (const shared::ApplicationError &)

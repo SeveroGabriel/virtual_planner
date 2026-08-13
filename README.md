@@ -27,8 +27,8 @@ O projeto possui uma estrutura inicial para usuários, tarefas, metas e lembrete
 Esta é a opção padrão:
 
 ```bash
-cmake -S . -B build
-cmake --build build
+cmake -S back-end -B back-end/build
+cmake --build back-end/build
 ```
 
 ### Com PostgreSQL
@@ -36,8 +36,8 @@ cmake --build build
 É necessário instalar o `libpqxx` antes de compilar:
 
 ```bash
-cmake -S . -B build-postgres -DVIRTUAL_PLANNER_WITH_POSTGRES=ON
-cmake --build build-postgres
+cmake -S back-end -B back-end/build-postgres -DVIRTUAL_PLANNER_WITH_POSTGRES=ON
+cmake --build back-end/build-postgres
 ```
 
 ## Execução
@@ -45,13 +45,13 @@ cmake --build build-postgres
 Sem PostgreSQL:
 
 ```bash
-./build/virtual_planner
+./back-end/build/virtual_planner
 ```
 
 Com PostgreSQL:
 
 ```bash
-VP_USE_POSTGRES=true ./build-postgres/virtual_planner
+VP_USE_POSTGRES=true ./back-end/build-postgres/virtual_planner
 ```
 
 ## Configuração do PostgreSQL
@@ -86,45 +86,61 @@ docker compose down
 
 Use `docker compose down -v` somente para apagar também os dados locais.
 
+## Migrações Do Banco De Dados
+
+Com o PostgreSQL de pé (`docker compose up -d postgres`), aplique as migrações de `back-end/migrations/` com:
+
+```bash
+./scripts/db-migrate.sh
+```
+
+O script é idempotente (não reaplica migrações já registradas), roda cada migração em transação e usa as mesmas variáveis de ambiente de `back-end/.env.example` (`POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`). Veja `back-end/migrations/README.md` para detalhes.
+
 ## Testes
 
 Testes padrão:
 
 ```bash
-ctest --test-dir build --output-on-failure
+ctest --test-dir back-end/build --output-on-failure
 ```
 
 Teste de integração com PostgreSQL:
 
 ```bash
-ctest --test-dir build-postgres --output-on-failure -R postgres_integration_test
+ctest --test-dir back-end/build-postgres --output-on-failure -R postgres_integration_test
 ```
 
-O teste de integração precisa das variáveis `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`.
+O teste de integração precisa das variáveis `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`, e do schema aplicado via `./scripts/db-migrate.sh`.
 
 ## Estrutura do Projeto
 
 ```text
 .
-├── include/virtual_planner
-│   ├── application
-│   ├── core
-│   ├── domain
-│   │   ├── entities
-│   │   ├── enums
-│   │   └── value_objects
-│   ├── infrastructure
-│   │   ├── config
-│   │   └── postgres
-│   ├── interfaces
-│   ├── persistence
-│   └── shared
-├── src
-├── tests
+├── back-end
+│   ├── include/virtual_planner
+│   │   ├── application
+│   │   ├── core
+│   │   ├── domain
+│   │   │   ├── entities
+│   │   │   ├── enums
+│   │   │   └── value_objects
+│   │   ├── infrastructure
+│   │   │   ├── config
+│   │   │   └── postgres
+│   │   ├── interfaces
+│   │   ├── persistence
+│   │   └── shared
+│   ├── src
+│   ├── tests
+│   ├── migrations
+│   ├── .env.example
+│   └── CMakeLists.txt
+├── scripts
+│   └── db-migrate.sh
 ├── docs
-├── migrations
+├── .github/workflows
 ├── docker-compose.yml
-└── CMakeLists.txt
+└── README.md
 ```
 
 ## Arquitetura

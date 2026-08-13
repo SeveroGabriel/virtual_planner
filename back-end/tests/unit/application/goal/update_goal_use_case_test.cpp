@@ -1,7 +1,6 @@
-#include <cassert>
-
 #include "virtual_planner/application/goal/update_goal_use_case.hpp"
 
+#include "../../../support/expect.hpp"
 #include "../../persistence/fake_goal_repository.hpp"
 
 using namespace virtual_planner;
@@ -30,10 +29,11 @@ int main()
 
     auto goal = repository.find_by_id(1);
 
-    assert(goal.has_value());
+    VP_EXPECT(goal.has_value(), "goal must exist after update");
 
-    assert(goal->description() ==
-           "New Description");
+    VP_EXPECT(goal->description() ==
+                  "New Description",
+              "updated goal should have the new description");
 
     return 0;
 }
