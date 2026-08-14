@@ -2,22 +2,11 @@
 #include "virtual_planner/infrastructure/postgres/postgres_config.hpp"
 #include "virtual_planner/shared/errors.hpp"
 
+#include "support/expect.hpp"
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
-
-namespace
-{
-
-  void expect(bool condition, const std::string &message)
-  {
-    if (!condition)
-    {
-      throw std::runtime_error(message);
-    }
-  }
-
-}
 
 int main()
 {
@@ -44,14 +33,14 @@ int main()
     const auto masked_connection_string = postgres_config.masked_connection_string();
 
     // Assert
-    expect(postgres_config.host() == "localhost", "host should be preserved");
-    expect(postgres_config.port() == 5432, "port should be parsed");
-    expect(postgres_config.database() == "virtual_planner_test", "database should be preserved");
-    expect(connection_string.find("secret-password") != std::string::npos,
+    VP_EXPECT(postgres_config.host() == "localhost", "host should be preserved");
+    VP_EXPECT(postgres_config.port() == 5432, "port should be parsed");
+    VP_EXPECT(postgres_config.database() == "virtual_planner_test", "database should be preserved");
+    VP_EXPECT(connection_string.find("secret-password") != std::string::npos,
            "connection string should contain the real password");
-    expect(masked_connection_string.find("secret-password") == std::string::npos,
+    VP_EXPECT(masked_connection_string.find("secret-password") == std::string::npos,
            "masked connection string should not expose the password");
-    expect(masked_connection_string.find("password='***'") != std::string::npos,
+    VP_EXPECT(masked_connection_string.find("password='***'") != std::string::npos,
            "masked connection string should show a placeholder");
 
     // Arrange
@@ -71,7 +60,7 @@ int main()
     }
 
     // Assert
-    expect(missing_password_rejected, "missing password should be rejected");
+    VP_EXPECT(missing_password_rejected, "missing password should be rejected");
 
     // Arrange
     AppConfig invalid_port("planner", ExecutionProfile::Test);
@@ -92,7 +81,7 @@ int main()
     }
 
     // Assert
-    expect(invalid_port_rejected, "invalid port should be rejected");
+    VP_EXPECT(invalid_port_rejected, "invalid port should be rejected");
   }
   catch (const std::exception &error)
   {

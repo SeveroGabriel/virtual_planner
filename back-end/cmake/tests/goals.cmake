@@ -1,0 +1,21 @@
+# Testes do modulo Goal. Registre aqui qualquer teste novo de Goal.
+virtual_planner_add_test(
+  create_goal_use_case_test
+  unit/application/goal/create_goal_use_case_test.cpp
+)
+virtual_planner_add_test(
+  update_goal_use_case_test
+  unit/application/goal/update_goal_use_case_test.cpp
+)
+virtual_planner_add_test(
+  delete_goal_use_case_test
+  unit/application/goal/delete_goal_use_case_test.cpp
+)
+virtual_planner_add_test(
+  list_goals_use_case_test
+  unit/application/goal/list_goals_use_case_test.cpp
+)
+virtual_planner_add_test(
+  change_goal_status_use_case_test
+  unit/application/goal/change_goal_status_use_case_test.cpp
+)

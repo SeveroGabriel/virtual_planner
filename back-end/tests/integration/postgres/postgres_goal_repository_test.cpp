@@ -7,7 +7,7 @@
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_goal_repository.hpp"
 
-#include "../../support/expect.hpp"
+#include "support/expect.hpp"
 
 using namespace virtual_planner;
 

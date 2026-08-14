@@ -1,22 +1,11 @@
 #include "virtual_planner/core/app_config.hpp"
 #include "virtual_planner/shared/errors.hpp"
 
+#include "support/expect.hpp"
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
-
-namespace
-{
-
-  void expect(bool condition, const std::string &message)
-  {
-    if (!condition)
-    {
-      throw std::runtime_error(message);
-    }
-  }
-
-}
 
 int main()
 {
@@ -30,13 +19,13 @@ int main()
     AppConfig config("planner", ExecutionProfile::Test);
     config.set("database.host", "localhost");
 
-    expect(config.app_name() == "planner", "app name should be preserved");
-    expect(config.profile() == ExecutionProfile::Test, "profile should be preserved");
-    expect(config.get("database.host") == "localhost", "stored value should be readable");
-    expect(config.get_or("missing", "fallback") == "fallback", "fallback should be returned");
-    expect(parse_execution_profile("production") == ExecutionProfile::Production,
+    VP_EXPECT(config.app_name() == "planner", "app name should be preserved");
+    VP_EXPECT(config.profile() == ExecutionProfile::Test, "profile should be preserved");
+    VP_EXPECT(config.get("database.host") == "localhost", "stored value should be readable");
+    VP_EXPECT(config.get_or("missing", "fallback") == "fallback", "fallback should be returned");
+    VP_EXPECT(parse_execution_profile("production") == ExecutionProfile::Production,
            "production profile should parse");
-    expect(to_string(ExecutionProfile::Development) == "development",
+    VP_EXPECT(to_string(ExecutionProfile::Development) == "development",
            "development profile should format");
 
     bool rejected_unknown_profile = false;
@@ -49,7 +38,7 @@ int main()
       rejected_unknown_profile = true;
     }
 
-    expect(rejected_unknown_profile, "unknown profile should be rejected");
+    VP_EXPECT(rejected_unknown_profile, "unknown profile should be rejected");
   }
   catch (const std::exception &error)
   {

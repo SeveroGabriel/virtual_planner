@@ -1,6 +1,6 @@
 #include "virtual_planner/application/goal/delete_goal_use_case.hpp"
 
-#include "../../../support/expect.hpp"
+#include "support/expect.hpp"
 #include "../../persistence/fake_goal_repository.hpp"
 
 using namespace virtual_planner;

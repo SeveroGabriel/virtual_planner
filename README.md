@@ -13,6 +13,16 @@ O projeto possui uma estrutura inicial para usuários, tarefas, metas e lembrete
 - Criar uma base para tarefas, metas e lembretes.
 - Manter testes que não dependam de um banco real.
 
+## Tecnologias
+
+- **C++20**: linguagem do backend.
+- **CMake 3.20+**: build system, modularizado em `back-end/cmake/`.
+- **CTest**: execução da suíte de testes, sem framework externo.
+- **PostgreSQL**: banco de dados, usado através de um adapter opcional.
+- **libpqxx**: cliente C++ do PostgreSQL, exigido apenas quando `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
+- **Docker Compose**: PostgreSQL local para desenvolvimento e testes de integração.
+- **GitHub Actions**: CI do backend, em `.github/workflows/backend.yml`.
+
 ## Requisitos
 
 - Compilador com suporte a C++20.
@@ -38,6 +48,13 @@ cmake --build back-end/build
 ```bash
 cmake -S back-end -B back-end/build-postgres -DVIRTUAL_PLANNER_WITH_POSTGRES=ON
 cmake --build back-end/build-postgres
+```
+
+No macOS com Homebrew, o `libpq` é keg-only e fica fora do prefixo padrão que o CMake procura. Como o `libpqxx` depende dele, é preciso informar os dois prefixos:
+
+```bash
+cmake -S back-end -B back-end/build-postgres -DVIRTUAL_PLANNER_WITH_POSTGRES=ON \
+  -DCMAKE_PREFIX_PATH="$(brew --prefix libpqxx);$(brew --prefix libpq)"
 ```
 
 ## Execução
@@ -148,7 +165,7 @@ O teste de integração precisa das variáveis `POSTGRES_DB`, `POSTGRES_USER` e 
 O projeto está dividido em camadas:
 
 - `domain`: entidades e regras do sistema.
-- `application`: futuros serviços e casos de uso.
+- `application`: casos de uso do sistema. O módulo Goal já está implementado (criar, atualizar, remover, listar e alterar status de metas).
 - `interfaces`: contratos usados pelas diferentes partes do projeto.
 - `persistence`: contratos para banco de dados e repositórios.
 - `infrastructure`: implementações externas, como configuração e PostgreSQL.
@@ -168,10 +185,11 @@ Outros arquivos do diagrama:
 
 - `persistence::Database`: abstração de ciclo de vida de persistência, independente de fornecedor.
 - `persistence::Transaction`: contrato mínimo para `commit()` e `rollback()`.
-- `persistence::*Repository`: contratos de repositório para as entidades de domínio, ainda sem implementação concreta de banco.
+- `persistence::*Repository`: contratos de repositório para as entidades de domínio. `GoalRepository` já possui implementação concreta em PostgreSQL; `TaskRepository`, `ReminderRepository` e `UserRepository` ainda são apenas contratos.
 - `infrastructure::postgres::PostgresConfig`: configuração externa da conexão PostgreSQL.
 - `infrastructure::postgres::PostgresDatabase`: adapter concreto baseado em `libpqxx`, compilado apenas com `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
 - `infrastructure::postgres::PostgresTransaction`: transação PostgreSQL com rollback automático no destrutor se não houver `commit()`.
+- `infrastructure::postgres::PostgresGoalRepository`: implementação concreta de `persistence::GoalRepository` sobre `libpqxx`.
 
 ## Domínio Inicial
 
@@ -189,20 +207,13 @@ Também possui tipos auxiliares para datas, horários, categorias, prioridades e
 
 ## Documentação
 
-Documentos adicionais estão disponíveis na pasta `docs/`, incluindo guias de arquitetura, convenções, PostgreSQL e primeiros passos.
+Documentos adicionais estão disponíveis na pasta `docs/`:
 
-## Status Atual
+- [`docs/getting-started.md`](docs/getting-started.md): primeiros passos.
+- [`docs/architecture.md`](docs/architecture.md): decisões de arquitetura.
+- [`docs/conventions.md`](docs/conventions.md): convenções de código, testes e build.
+- [`docs/persistence-architecture.md`](docs/persistence-architecture.md): camada de persistência.
+- [`docs/postgresql.md`](docs/postgresql.md): uso do PostgreSQL.
+- [`back-end/migrations/README.md`](back-end/migrations/README.md): convenção de numeração das migrações.
 
-- Build sem PostgreSQL funcionando.
-- Testes unitários funcionando.
-- Suporte opcional ao PostgreSQL implementado.
-- Entidades iniciais implementadas, incluindo value objects e enums.
-- Contratos de repositórios definidos em `persistence`, ainda sem implementação concreta.
-- Serviços, casos de uso e banco de dados completo ainda não implementados.
-
-## Próximos Passos
-
-1. Adicionar serviços e casos de uso.
-2. Criar mais testes para as regras do sistema.
-3. Implementar os repositórios PostgreSQL.
-4. Criar as tabelas e migrações do banco.
+O planejamento e o estado das tarefas ficam nas issues do GitHub, não neste arquivo.

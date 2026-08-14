@@ -99,6 +99,16 @@ for f in "${sql_files[@]}"; do
   printf '%s\t%s\t%s\n' "${version}" "${base}" "${f}" >> "${migration_manifest}"
 done
 
+# Falha cedo se duas migrations usarem o mesmo prefixo: a ordem de aplicação
+# ficaria indefinida e a versão é PRIMARY KEY em schema_migrations.
+# A regra de resolução está em back-end/migrations/README.md.
+duplicated_versions="$(cut -f1 "${migration_manifest}" | sort | uniq -d)"
+if [ -n "${duplicated_versions}" ]; then
+  echo "ERRO: prefixo de migration duplicado: ${duplicated_versions//$'\n'/, }" >&2
+  echo "Renomeie uma delas para o próximo número livre da faixa do seu domínio (veja back-end/migrations/README.md)." >&2
+  exit 1
+fi
+
 # Ordena numericamente pelo prefixo (evita quebra lexicográfica em 010+).
 sort -t $'\t' -k1,1n "${migration_manifest}" > "${sorted_manifest}"
 

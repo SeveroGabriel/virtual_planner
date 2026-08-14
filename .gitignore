@@ -24,4 +24,8 @@ front-end/dist/
 .env
 .env.*
 !.env.example
-.tokensave
+
+# Ferramentas locais de agentes de IA (ver docs/conventions.md)
+.claude/
+.agents/
+.tokensave/

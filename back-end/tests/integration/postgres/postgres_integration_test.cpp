@@ -2,6 +2,8 @@
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_transaction.hpp"
 
+#include "support/expect.hpp"
+
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -15,14 +17,6 @@ namespace
     return std::getenv("POSTGRES_DB") != nullptr &&
            std::getenv("POSTGRES_USER") != nullptr &&
            std::getenv("POSTGRES_PASSWORD") != nullptr;
-  }
-
-  void expect(bool condition, const std::string &message)
-  {
-    if (!condition)
-    {
-      throw std::runtime_error(message);
-    }
   }
 
 }
@@ -49,7 +43,7 @@ int main()
     database.connect();
 
     // Assert
-    expect(database.is_connected(), "database should connect to PostgreSQL");
+    VP_EXPECT(database.is_connected(), "database should connect to PostgreSQL");
 
     // Arrange
     {
@@ -72,7 +66,7 @@ int main()
       pqxx::work transaction(database.connection());
       const auto row = transaction.exec(
           "SELECT name FROM virtual_planner_postgres_test WHERE id = 1").one_row();
-      expect(row[0].as<std::string>() == "committed",
+      VP_EXPECT(row[0].as<std::string>() == "committed",
              "committed row should be visible");
       transaction.commit();
     }
@@ -90,12 +84,12 @@ int main()
       pqxx::work transaction(database.connection());
       const auto row = transaction.exec(
           "SELECT COUNT(*) FROM virtual_planner_postgres_test WHERE id = 2").one_row();
-      expect(row[0].as<int>() == 0, "rolled back row should not be visible");
+      VP_EXPECT(row[0].as<int>() == 0, "rolled back row should not be visible");
       transaction.commit();
     }
 
     database.shutdown();
-    expect(!database.is_connected(), "database should be disconnected after shutdown");
+    VP_EXPECT(!database.is_connected(), "database should be disconnected after shutdown");
   }
   catch (const std::exception &error)
   {

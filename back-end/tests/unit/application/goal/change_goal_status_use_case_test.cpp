@@ -1,5 +1,5 @@
 #include "virtual_planner/application/goal/change_goal_status_use_case.hpp"
-#include "../../../support/expect.hpp"
+#include "support/expect.hpp"
 #include "../../persistence/fake_goal_repository.hpp"
 
 using namespace virtual_planner;
