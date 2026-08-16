@@ -170,3 +170,22 @@ foreign key por tabela.
 - Não há schema SQL real.
 - Não há migrations aplicáveis porque ainda não há mapeamento persistente definido.
 - O build com PostgreSQL depende de `libpqxx` disponível no ambiente.
+
+### ADR-002 — Modelo de usuário: usuário único com `user_id` explícito (P-22A)
+
+**Contexto.** O domínio tem a entidade `User`, mas nenhuma tabela tem `user_id` e não existe nenhum requisito de autenticação no backlog. Ao mesmo tempo, quatro pessoas vão escrever migrations de `Goal`, `Task`, `Reminder` e `User` na Onda 3. Se `user_id` entrar depois, as quatro precisam refazer schema e backfill.
+
+**Decisão.** O sistema é **single-tenant**: existe exatamente um usuário, sem cadastro, login, senha ou sessão. Ainda assim, as tabelas de dados do usuário nascem com `user_id` explícito, apontando para esse usuário único semeado pela migration base.
+
+**Impacto por entidade.**
+
+*   **User:** Tabela `users` criada na faixa base, com uma linha semeada de `id = 1`. Sem coluna de senha e sem coluna de credencial. `email` continua sendo apenas dado de perfil.
+*   **Goal:** A migration de Goal adiciona `user_id BIGINT NOT NULL REFERENCES users(id)`.
+*   **Task:** Migration de Task já nasce com `user_id BIGINT NOT NULL REFERENCES users(id)`.
+*   **Reminder:** Migration de Reminder já nasce com `user_id BIGINT NOT NULL REFERENCES users(id)`.
+
+**Impacto em endpoints e autenticação.**
+
+*   Não há autenticação, nem middleware de sessão, nem token.
+*   O usuário corrente é resolvido no composition root como o usuário único e injetado nos casos de uso; nenhum endpoint recebe `user_id` pelo cliente.
+*   Endpoints de `Goal`, `Task` e `Reminder` não expõem `user_id` no payload nesta fase; o filtro por usuário é aplicado no servidor.
