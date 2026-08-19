@@ -12,6 +12,12 @@ namespace virtual_planner::shared
     explicit ApplicationError(const std::string &message);
   };
 
+  class DomainError final : public ApplicationError
+  {
+  public:
+    explicit DomainError(const std::string &message);
+  };
+
   class ConfigError final : public ApplicationError
   {
   public:
