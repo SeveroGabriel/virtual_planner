@@ -1,28 +1,37 @@
 #include "virtual_planner/domain/entities/goal.hpp"
 
-#include <utility>
 #include <stdexcept>
+#include <utility>
 
-namespace virtual_planner::domain {
+namespace virtual_planner::domain
+{
+
+namespace
+{
+
+bool is_blank(const std::string& value)
+{
+    return value.find_first_not_of(" \t\n\r\f\v") == std::string::npos;
+}
+
+} // namespace
 
 Goal::Goal(
     std::uint64_t id,
     std::string description,
     Category category,
     GoalStatus status,
-    GoalPeriod period
-)
+    GoalPeriod period)
     : id_(id),
       description_(std::move(description)),
       category_(category),
       status_(status),
       period_(period)
 {
-     if (description_.empty())
+    if (is_blank(description_))
     {
         throw std::invalid_argument(
-            "Goal description cannot be empty."
-        );
+            "Goal description cannot be empty or blank.");
     }
 }
 
@@ -53,11 +62,10 @@ GoalPeriod Goal::period() const
 
 void Goal::update_description(std::string description)
 {
-    if (description.empty())
+    if (is_blank(description))
     {
         throw std::invalid_argument(
-            "Goal description cannot be empty."
-        );
+            "Goal description cannot be empty or blank.");
     }
 
     description_ = std::move(description);

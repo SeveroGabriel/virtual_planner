@@ -19,3 +19,7 @@ virtual_planner_add_test(
   change_goal_status_use_case_test
   unit/application/goal/change_goal_status_use_case_test.cpp
 )
+virtual_planner_add_test(
+  goal_test
+  unit/domain/goal_test.cpp
+)
