@@ -89,7 +89,7 @@ trabalhando em módulos diferentes nunca editem a mesma linha:
 - `cmake/sources/*.cmake`: fontes da biblioteca `virtual_planner_core`, por
   camada (`core`, `domain`, `application`, `infrastructure`, `postgres`).
 - `cmake/tests/*.cmake`: alvos de teste, por módulo (`core`, `infrastructure`,
-  `goals`, `tasks`, `reminders`, `users`, `postgres`).
+  `goals`, `tasks`, `reminders`, `users`, `postgres`, `persistence`).
 
 ### Como registrar um arquivo de código novo
 

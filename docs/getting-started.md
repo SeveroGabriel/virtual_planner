@@ -51,6 +51,19 @@ VP_USE_POSTGRES=true ./build-postgres/virtual_planner
 
 Também configure as variáveis `POSTGRES_*` descritas em `.env.example`.
 
+## Build Com HTTP
+
+```bash
+cmake -S back-end -B back-end/build-http -DVIRTUAL_PLANNER_WITH_HTTP=ON
+cmake --build back-end/build-http --config Debug
+```
+
+`VIRTUAL_PLANNER_WITH_HTTP` é `OFF` por padrão, então o build padrão nunca
+toca a rede. Esse build compila a prova de conceito do endpoint `/api/health`
+(ADR-003, issue #13), que não é registrada no CTest e não roda no CI — a
+única forma de reverificar o critério de aceite da issue é rodar o comando
+acima manualmente.
+
 ## Docker PostgreSQL
 
 ```bash

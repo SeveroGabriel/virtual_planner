@@ -42,6 +42,11 @@ if(VIRTUAL_PLANNER_WITH_POSTGRES)
   include(${VIRTUAL_PLANNER_CMAKE_DIR}/postgres.cmake)
 endif()
 
+# Dependencia HTTP+JSON e PoC de endpoint (ADR-003). O modulo declara a opcao
+# VIRTUAL_PLANNER_WITH_HTTP, OFF por padrao, e so entao baixa qualquer coisa;
+# por isso e incluido sem condicao aqui.
+include(${VIRTUAL_PLANNER_CMAKE_DIR}/http.cmake)
+
 # ---------------------------------------------------------------------------
 # Executavel
 # ---------------------------------------------------------------------------
@@ -63,6 +68,7 @@ include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/goals.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/tasks.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/reminders.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/users.cmake)
+include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/persistence.cmake)
 
 if(VIRTUAL_PLANNER_WITH_POSTGRES)
   include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/postgres.cmake)

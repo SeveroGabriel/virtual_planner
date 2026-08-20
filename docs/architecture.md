@@ -162,6 +162,87 @@ existe para eliminar.
 identidade; a porta para multiusuário fica aberta ao custo de uma coluna e uma
 foreign key por tabela.
 
+### ADR-003 — Biblioteca HTTP e JSON do backend (P-27)
+
+- **Status:** Aceita
+- **Data:** 2026-08-19
+- **Issue:** #13 (P-27)
+
+**Contexto.** O backend precisa expor uma API REST para o frontend (Onda 4) e
+para o servidor HTTP da Onda 2 (#29 / P-28). A escolha condiciona o contrato
+JSON compartilhado (#30 / P-29.0) e todos os endpoints, então precisa ser feita
+uma única vez e cedo. O projeto compila com CMake puro e não adota gerenciador
+de pacotes externo, então a única forma admissível de trazer a dependência é
+`FetchContent`.
+
+**Opções consideradas.** As três foram efetivamente configuradas e compiladas
+nesta máquina (macOS 15 arm64, AppleClang 21, CMake 4.4.0), com um PoC
+equivalente de `/api/health` em cada uma. Os números abaixo são medidos, não
+estimados.
+
+| Opção | Licença | Header-only | `FetchContent` sem instalação manual | Build limpo do PoC | Fontes baixadas |
+| --- | --- | --- | --- | --- | --- |
+| **cpp-httplib 0.53.1 + nlohmann/json 3.12.0** | MIT / MIT | sim / sim — nenhuma biblioteca é gerada, os alvos são `INTERFACE` | **sim**, sem nenhum ajuste | **4,9 s** de configure (com download) + **2,6 s** de compilação | **17 MB** |
+| Crow 1.3.3 + nlohmann/json 3.12.0 | BSD-3-Clause / MIT | sim, mas arrasta o Asio standalone (BSL-1.0): 417 cabeçalhos do Asio entram na unidade de tradução do PoC | **não** — falha no configure com `Could NOT find asio (missing: ASIO_INCLUDE_DIR)`. Só compila com um `FetchContent` extra do Asio e `ASIO_INCLUDE_DIR` apontado à mão | 27,3 s de configure + 1,9 s de compilação, já com o contorno | 44 MB |
+| Boost.Beast + Boost.JSON (Boost 1.89.0) | BSL-1.0 / BSL-1.0 | Beast sim; **Boost.JSON não** — o build gera `libboost_json.a`. O modo header-only é opt-in via `boost/json/src.hpp` | parcialmente — `find_package(Boost COMPONENTS json)` falha (`missing: Boost_INCLUDE_DIR json`), porque não há Boost instalado. Funciona só pelo tarball oficial `boost-1.89.0-cmake.tar.xz`, de 97,4 MiB | 17,5 s de configure + 4,5 s de build, que compila `boost_json`, `boost_container` e `boost_date_time` | diretório de build de **784 MB** |
+
+**Decisão.** Adotar **cpp-httplib + nlohmann/json**, integradas por
+`FetchContent` em `back-end/cmake/http.cmake`, atrás da opção de CMake
+`VIRTUAL_PLANNER_WITH_HTTP`, desligada por padrão.
+
+**Motivo.** Ancorado na tabela, e nesta ordem de peso:
+
+1. **É a única que `FetchContent` resolve sozinha.** Crow não é auto-suficiente:
+   falha no configure procurando `ASIO_INCLUDE_DIR`. Boost precisa do tarball de
+   97,4 MiB porque não há Boost instalado no ambiente. A `#13` exige que o PoC
+   compile "sem instalação manual de dependência", e só esta opção cumpre isso
+   sem contorno.
+2. **É a única MIT nas duas metades.** Crow é BSD-3-Clause e ainda adiciona a
+   BSL-1.0 do Asio, ou seja, três licenças. Boost adiciona a BSL-1.0. Nenhuma
+   das duas é restritiva, mas para um trabalho acadêmico uma licença única e
+   permissiva é menos coisa para justificar.
+3. **É header-only de verdade.** Nenhum artefato de biblioteca é gerado. Boost.JSON
+   gera `libboost_json.a`, o que significa build de biblioteca e não apenas de
+   cabeçalhos — exatamente o custo que a `#13` quis evitar.
+4. **Custo de disco e de build é o menor.** 17 MB de fontes contra 44 MB do
+   Crow + Asio e um diretório de build de 784 MB no Boost. O ciclo completo de
+   configure + build limpo fica em cerca de 7,5 s.
+
+**Registro honesto do que contraria a decisão.** No PoC trivial, o Crow
+compilou um pouco mais rápido que o cpp-httplib (1,9 s contra 2,6 s), porque o
+`httplib.h` é um cabeçalho único e grande. A diferença é de menos de um segundo
+e não compensa a dependência transitiva do Asio nem a falha de `FetchContent`.
+
+**Correção da premissa inicial.** O levantamento de partida da `#13` supunha que
+Crow resolveria por `FetchContent` e que Boost exigiria instalação prévia. A
+medição mostrou o oposto em ambos os casos: quem falha no `FetchContent` puro é
+o Crow, e o Boost é obtível por `FetchContent` — só que a um custo de disco duas
+ordens de grandeza maior. A decisão não muda, mas o motivo é outro.
+
+**Consequências.**
+
+- O contrato JSON de #30 (P-29.0) é escrito contra a API do `nlohmann::json`.
+- A dependência entra por `FetchContent` em `back-end/cmake/http.cmake`, ativada
+  pela opção `VIRTUAL_PLANNER_WITH_HTTP`. Com ela em `OFF`, que é o padrão,
+  nenhum `FetchContent_Declare` é avaliado e o build sem rede continua verde.
+- `nlohmann/json` é baixado pelo tarball da release (112 KiB, verificado por
+  `SHA256`) e não pelo clone git, que ocupa 195 MB por trazer testes e dados de
+  benchmark.
+- O PoC `back-end/src/api/health_poc.cpp` não é registrado no CTest e não sobe
+  em CI. Ele existe apenas como prova da decisão.
+- Trocar de biblioteca depois custa reescrever a camada `src/api/`, não o
+  domínio.
+
+**Alternativa rejeitada.** Boost.Beast + Boost.JSON. Além do custo de disco, o
+Beast é uma API de baixo nível: não tem roteamento, então `/api/health` exigiria
+escrever à mão o parsing de método e caminho. Para o escopo desta issue isso é
+infraestrutura muito além do necessário.
+
+**Alternativa rejeitada.** Crow + nlohmann/json. A API de roteamento é
+agradável, mas exige fixar a dependência do Asio no `CMakeLists` do projeto, o
+que transfere para nós a manutenção de uma dependência que a própria biblioteca
+deveria resolver.
+
 ## Limitações Atuais
 
 - Não há pool de conexões.
