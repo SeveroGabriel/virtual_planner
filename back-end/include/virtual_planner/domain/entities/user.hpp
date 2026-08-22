@@ -20,9 +20,9 @@ public:
 
     [[nodiscard]] const std::string& email() const;
 
-    void update_name(std::string name);
+    void update_name(std::string new_name);
 
-    void update_email(std::string email);
+    void update_email(std::string new_email);
 
 private:
     std::uint64_t id_;
@@ -30,6 +30,10 @@ private:
     std::string name_;
 
     std::string email_;
+
+    void validate_name(const std::string& name) const;
+
+    void validate_email(const std::string& email) const;
 };
 
 } // namespace virtual_planner::domain
