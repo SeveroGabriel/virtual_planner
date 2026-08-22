@@ -1,0 +1,40 @@
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - "front-end/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "front-end/**"
+      - ".github/workflows/frontend.yml"
+
+jobs:
+  build-and-lint:
+    name: Build and lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Mesma major usada em desenvolvimento local, para evitar divergencia
+      # entre o que roda no CI e o que os devs testam na maquina.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: front-end/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: front-end
+
+      - name: Build
+        run: npm run build
+        working-directory: front-end
+
+      - name: Lint
+        run: npm run lint
+        working-directory: front-end
