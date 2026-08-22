@@ -1,7 +1,13 @@
 name: Backend CI
 
 on:
+  # push so em main: em branch de PR o gatilho pull_request ja cobre, e ter os
+  # dois sem filtro de branch faz o mesmo commit rodar duas vezes (ver #76).
+  # Aqui o desperdicio e maior que no frontend, porque o job de integracao
+  # compila o libpqxx a partir do codigo-fonte.
   push:
+    branches:
+      - main
     paths:
       - "back-end/**"
       - "scripts/db-migrate.sh"
