@@ -1,7 +1,11 @@
 name: Frontend CI
 
 on:
+  # push so em main: em branch de PR o gatilho pull_request ja cobre, e ter os
+  # dois sem filtro de branch faz o mesmo commit rodar duas vezes (ver #76).
   push:
+    branches:
+      - main
     paths:
       - "front-end/**"
       - ".github/workflows/frontend.yml"
