@@ -1,9 +1,30 @@
 #include "virtual_planner/domain/entities/task.hpp"
+#include "virtual_planner/shared/errors.hpp"
 
 #include <stdexcept>
 #include <utility>
 
 namespace virtual_planner::domain {
+
+namespace {
+
+bool is_blank(const std::string& value)
+{
+    return value.empty() ||
+           value.find_first_not_of(" \t\n\r\f\v") == std::string::npos;
+}
+
+void validate_description(const std::string& description)
+{
+    if (is_blank(description))
+    {
+        throw shared::DomainError(
+            "Task description cannot be empty or blank."
+        );
+    }
+}
+
+}
 
 Task::Task(
     std::uint64_t id,
@@ -22,12 +43,7 @@ Task::Task(
       priority_(priority),
       status_(status)
 {
-    if (description_.empty())
-    {
-        throw std::invalid_argument(
-            "Task description cannot be empty."
-        );
-    }
+    validate_description(description_);
 }
 
 std::uint64_t Task::id() const
@@ -67,13 +83,7 @@ TaskStatus Task::status() const
 
 void Task::update_description(std::string description)
 {
-    if (description.empty())
-    {
-        throw std::invalid_argument(
-            "Task description cannot be empty."
-        );
-    }
-
+    validate_description(description);
     description_ = std::move(description);
 }
 

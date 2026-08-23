@@ -4,9 +4,27 @@
 
 namespace virtual_planner::domain {
 
+namespace {
+
+constexpr TimeSlot::Minutes kMinutesPerDay{24 * 60};
+
+} // namespace
+
 TimeSlot::TimeSlot(Minutes start, Minutes end)
     : start_(start), end_(end)
 {
+    if (start.count() < 0)
+    {
+        throw std::invalid_argument(
+            "Start time must not be negative.");
+    }
+
+    if (end > kMinutesPerDay)
+    {
+        throw std::invalid_argument(
+            "End time must be within the same day.");
+    }
+
     if (end <= start)
     {
         throw std::invalid_argument(

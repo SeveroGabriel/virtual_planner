@@ -214,6 +214,7 @@ Documentos adicionais estão disponíveis na pasta `docs/`:
 - [`docs/conventions.md`](docs/conventions.md): convenções de código, testes e build.
 - [`docs/persistence-architecture.md`](docs/persistence-architecture.md): camada de persistência.
 - [`docs/postgresql.md`](docs/postgresql.md): uso do PostgreSQL.
+- [`docs/date-timeslot-contract.md`](docs/date-timeslot-contract.md): contrato público congelado de `Date` e `TimeSlot`.
 - [`back-end/migrations/README.md`](back-end/migrations/README.md): convenção de numeração das migrações.
 
 O planejamento e o estado das tarefas ficam nas issues do GitHub, não neste arquivo.

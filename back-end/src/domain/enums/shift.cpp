@@ -28,7 +28,7 @@ Shift shift_from_string(std::string_view value)
     if (value == "Afternoon") return Shift::Afternoon;
     if (value == "Evening") return Shift::Evening;
 
-    throw std::invalid_argument("Invalid ReminderType");
+    throw std::invalid_argument("Invalid Shift");
 }
 
 }  // namespace virtual_planner::domain
