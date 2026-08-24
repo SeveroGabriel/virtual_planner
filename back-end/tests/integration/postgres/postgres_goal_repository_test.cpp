@@ -97,7 +97,7 @@ int main()
 
         // Act: update() — this is the path that used to fail because the
         // 001 schema had no updated_at column while the repository set it
-        // unconditionally (see migrations/002_add_goals_timestamps_and_checks.sql).
+        // unconditionally (see migrations/021_add_goals_timestamps_and_checks.sql).
         domain::Goal updated_goal(
             id,
             "Finish C++ Planner (revised)",
