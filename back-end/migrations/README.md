@@ -18,7 +18,7 @@ reservada**. Escolha sempre o menor número livre **dentro da sua faixa**:
 
 | Faixa | Domínio | Responsável |
 | --- | --- | --- |
-| 001–019 | Base e infraestrutura (tabela `users`, extensões, tabelas compartilhadas) | Arquitetura |
+| 001–019 | Base e infraestrutura (`001` = tabela `users`; extensões e tabelas compartilhadas) | Arquitetura |
 | 020–029 | `Goal` | Dani |
 | 030–039 | `Task` | Bel |
 | 040–049 | `Reminder` | Laysa |
@@ -32,9 +32,10 @@ ordem de aplicação fica determinada mesmo quando os PRs entram fora de ordem.
 ### Migrations anteriores à convenção
 
 `020_create_goals_table.sql` e `021_add_goals_timestamps_and_checks.sql` são
-anteriores a esta convenção e permanecem na faixa base. Elas **não são
-renumeradas**: renomear uma migration já aplicada quebraria o registro em
-`schema_migrations`. Mudanças novas em `goals` usam a faixa 020–029.
+anteriores a esta convenção e já foram renumeradas para a faixa de `Goal`, que
+é onde ficam. Elas **não são renumeradas de novo**: renomear uma migration já
+aplicada quebraria o registro em `schema_migrations`. Mudanças novas em `goals`
+usam a faixa 020–029.
 
 ### Regra de conflito
 
@@ -48,6 +49,27 @@ Se dois PRs abertos usarem o mesmo prefixo:
    prefixo, para que a colisão apareça no CI e não vire ordem indefinida em
    produção. `version` também é PRIMARY KEY em `schema_migrations`, então a
    colisão nunca passa despercebida.
+
+## Usuário semeado (ADR-002)
+
+`001_create_users_table.sql` cria a tabela `users` e semeia exatamente uma
+linha, com `id = 1`. O sistema é single-tenant (ADR-002 em
+`docs/architecture.md`): não há cadastro, login, senha nem sessão, e `users`
+não tem coluna de senha nem de credencial.
+
+Toda tabela de domínio referencia esse usuário com a coluna:
+
+```sql
+user_id BIGINT NOT NULL REFERENCES users(id)
+```
+
+Como a migration base é a `001`, ela é aplicada antes de qualquer faixa de
+domínio em banco novo, então a foreign key sempre encontra `users`.
+
+Colunas de perfil (`name`, `email`) **não** estão em `001`: elas entram na
+faixa 050–059, junto do repositório de `User`. A sequence `users_id_seq` já
+está posicionada depois da linha semeada, então um `INSERT` sem `id` recebe
+`2` e não colide com o usuário 1.
 
 ## Como aplicar
 
