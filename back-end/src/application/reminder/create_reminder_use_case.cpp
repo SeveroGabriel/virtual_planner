@@ -2,26 +2,23 @@
 
 #include "virtual_planner/domain/entities/reminder.hpp"
 
-#include <stdexcept>
-
 namespace virtual_planner::application {
 
 CreateReminderUseCase::CreateReminderUseCase(
     persistence::ReminderRepository& repository)
-    : repositorio_(repository)
+    : repository_(repository)
 {
 }
 
 std::uint64_t CreateReminderUseCase::execute(
     const CreateReminderRequest& request) const
 {
-    if (repositorio_.find_by_id(request.id).has_value())
-    {
-        throw std::runtime_error("Lembrete já existe.");
-    }
-
-    const domain::Reminder lembrete{
-        request.id,
+    // O id que o repositorio devolve e o unico id valido. Nao ha mais guarda
+    // de id duplicado porque nao ha mais como duplicar: save so insere
+    // (issue #90). O id passado a entidade aqui e descartado pelo
+    // repositorio.
+    const domain::Reminder reminder{
+        0,
         request.description,
         request.category,
         request.date,
@@ -29,8 +26,7 @@ std::uint64_t CreateReminderUseCase::execute(
         request.type,
         request.recurrence};
 
-    repositorio_.save(lembrete);
-    return lembrete.id();
+    return repository_.save(reminder);
 }
 
 } // namespace virtual_planner::application

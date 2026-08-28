@@ -216,13 +216,41 @@ int main()
     // outra. Os cenarios acima usam porta 0 e nao pegariam isso.
     {
         // Descobre uma porta livre deixando o sistema escolher uma e
-        // devolvendo-a em seguida. httplib liga SO_REUSEADDR, entao reabrir a
-        // mesma porta logo depois funciona.
+        // devolvendo-a em seguida.
+        //
+        // O stop() aqui NAO e opcional. httplib::Server tem destrutor
+        // defaulted: sair de escopo nao fecha o socket de escuta, e stop() e a
+        // unica coisa que libera o descritor — o comentario dele no httplib.h
+        // diz exatamente isso. Sem stop(), o probe vira um listener orfao na
+        // porta, sem ninguem chamando accept.
+        //
+        // E ai o detalhe que transforma o vazamento em teste intermitente:
+        // httplib liga SO_REUSEPORT por padrao, nao SO_REUSEADDR. Com
+        // SO_REUSEPORT o servidor real consegue abrir a MESMA porta, os dois
+        // sockets ficam escutando, e o kernel distribui as conexoes entre
+        // eles. As que caem no orfao nunca sao aceitas e morrem no timeout de
+        // leitura. Foi assim que este teste falhou no CI enquanto passava na
+        // maquina local.
         int free_port = 0;
         {
             httplib::Server probe;
             free_port = probe.bind_to_any_port("127.0.0.1");
             VP_EXPECT(free_port > 0, "the probe should find a free port");
+            probe.stop();
+        }
+
+        // Guarda do proprio vazamento descrito acima: se o probe tivesse
+        // deixado o socket aberto, alguem ainda estaria escutando nesta porta
+        // agora, e o connect passaria em vez de ser recusado. Sem esta
+        // assercao, remover o stop() acima volta a produzir uma falha
+        // intermitente e dificil de rastrear em vez de um erro direto.
+        {
+            httplib::Client leak_check("127.0.0.1", free_port);
+            leak_check.set_connection_timeout(1, 0);
+
+            VP_EXPECT(
+                leak_check.Get("/api/health").error() == httplib::Error::Connection,
+                "the probe must release the port before the server binds it");
         }
 
         http_api::ServerConfig config_with_port;

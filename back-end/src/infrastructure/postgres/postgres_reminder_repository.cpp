@@ -42,16 +42,17 @@ PostgresReminderRepository::PostgresReminderRepository(
 {
 }
 
-void PostgresReminderRepository::save(
+// O id vem da identity da tabela (migration 041), nao do chamador: save so
+// insere e devolve o id gerado, como PostgresGoalRepository::save.
+std::uint64_t PostgresReminderRepository::save(
     const domain::Reminder& reminder)
 {
     pqxx::work transaction(database_.connection());
 
-    transaction.exec(
+    const auto result = transaction.exec(
         R"(
             INSERT INTO reminders
             (
-                id,
                 user_id,
                 description,
                 category,
@@ -61,22 +62,11 @@ void PostgresReminderRepository::save(
                 type,
                 recurrence
             )
-            VALUES ($1, $2, $3, $4, make_date($5, $6, $7), $8, $9, $10, $11)
-            ON CONFLICT (id) DO UPDATE
-            SET
-                description = EXCLUDED.description,
-                category = EXCLUDED.category,
-                reminder_date = EXCLUDED.reminder_date,
-                start_minutes = EXCLUDED.start_minutes,
-                end_minutes = EXCLUDED.end_minutes,
-                type = EXCLUDED.type,
-                recurrence = EXCLUDED.recurrence,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE reminders.user_id = EXCLUDED.user_id
+            VALUES ($1, $2, $3, make_date($4, $5, $6), $7, $8, $9, $10)
+            RETURNING id
         )",
         pqxx::params{
             transaction,
-            reminder.id(),
             kSingleTenantUserId,
             reminder.description(),
             domain::to_string(reminder.category()),
@@ -86,7 +76,47 @@ void PostgresReminderRepository::save(
             reminder.time_slot().start().count(),
             reminder.time_slot().end().count(),
             domain::to_string(reminder.type()),
-            domain::to_string(reminder.recurrence())}).no_rows();
+            domain::to_string(reminder.recurrence())});
+
+    const auto id = result.one_row()["id"].as<std::uint64_t>();
+
+    transaction.commit();
+
+    return id;
+}
+
+void PostgresReminderRepository::update(
+    const domain::Reminder& reminder)
+{
+    pqxx::work transaction(database_.connection());
+
+    transaction.exec(
+        R"(
+            UPDATE reminders
+            SET
+                description = $1,
+                category = $2,
+                reminder_date = make_date($3, $4, $5),
+                start_minutes = $6,
+                end_minutes = $7,
+                type = $8,
+                recurrence = $9,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $10 AND user_id = $11
+        )",
+        pqxx::params{
+            transaction,
+            reminder.description(),
+            domain::to_string(reminder.category()),
+            reminder.date().year(),
+            reminder.date().month(),
+            reminder.date().day(),
+            reminder.time_slot().start().count(),
+            reminder.time_slot().end().count(),
+            domain::to_string(reminder.type()),
+            domain::to_string(reminder.recurrence()),
+            reminder.id(),
+            kSingleTenantUserId}).no_rows();
 
     transaction.commit();
 }

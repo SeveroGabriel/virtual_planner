@@ -1,4 +1,5 @@
 #include "virtual_planner/domain/entities/task.hpp"
+#include "virtual_planner/domain/text.hpp"
 #include "virtual_planner/shared/errors.hpp"
 
 #include <stdexcept>
@@ -7,12 +8,6 @@
 namespace virtual_planner::domain {
 
 namespace {
-
-bool is_blank(const std::string& value)
-{
-    return value.empty() ||
-           value.find_first_not_of(" \t\n\r\f\v") == std::string::npos;
-}
 
 void validate_description(const std::string& description)
 {

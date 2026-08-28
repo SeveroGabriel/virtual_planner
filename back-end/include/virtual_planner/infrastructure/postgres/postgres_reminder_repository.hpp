@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
 #include "virtual_planner/persistence/reminder_repository.hpp"
 
@@ -14,7 +16,9 @@ public:
     explicit PostgresReminderRepository(
         PostgresDatabase& database);
 
-    void save(const domain::Reminder& reminder) override;
+    std::uint64_t save(const domain::Reminder& reminder) override;
+
+    void update(const domain::Reminder& reminder) override;
 
     std::optional<domain::Reminder> find_by_id(
         std::uint64_t id) override;

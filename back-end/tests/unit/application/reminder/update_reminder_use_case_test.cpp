@@ -12,9 +12,12 @@ using namespace virtual_planner;
 
 int main()
 {
-    persistence::InMemoryReminderRepository repositorio;
-    repositorio.save(domain::Reminder{
-        7,
+    persistence::InMemoryReminderRepository repository;
+
+    // O id vem do repositorio (issue #90); a entidade entra com 0 e o valor
+    // gerado e o que vale daqui em diante.
+    const auto id = repository.save(domain::Reminder{
+        0,
         "Original",
         domain::Category::Study,
         domain::Date{20, 8, 2026},
@@ -22,9 +25,9 @@ int main()
         domain::ReminderType::Study,
         domain::ReminderRecurrence::Once});
 
-    application::UpdateReminderUseCase atualizar(repositorio);
-    atualizar.execute(application::UpdateReminderRequest{
-        7,
+    application::UpdateReminderUseCase update_reminder(repository);
+    update_reminder.execute(application::UpdateReminderRequest{
+        id,
         "Atualizado",
         domain::Category::Work,
         domain::Date{27, 8, 2026},
@@ -32,25 +35,25 @@ int main()
         domain::ReminderType::Meeting,
         domain::ReminderRecurrence::Weekly});
 
-    const auto atualizado = repositorio.find_by_id(7);
+    const auto updated = repository.find_by_id(id);
 
-    VP_EXPECT(atualizado.has_value(), "o lembrete atualizado deve continuar existindo");
-    VP_EXPECT(atualizado->id() == 7, "a atualização deve preservar o ID");
-    VP_EXPECT(atualizado->description() == "Atualizado", "a atualização deve substituir a descrição");
-    VP_EXPECT(atualizado->category() == domain::Category::Work, "a atualização deve substituir a categoria");
-    VP_EXPECT((atualizado->date() == domain::Date{27, 8, 2026}), "a atualização deve substituir a data");
-    VP_EXPECT(atualizado->time_slot().start() == std::chrono::hours{14}, "a atualização deve substituir o horário inicial");
-    VP_EXPECT(atualizado->time_slot().end() == std::chrono::hours{16}, "a atualização deve substituir o horário final");
-    VP_EXPECT(atualizado->type() == domain::ReminderType::Meeting, "a atualização deve substituir o tipo");
-    VP_EXPECT(atualizado->recurrence() == domain::ReminderRecurrence::Weekly, "a atualização deve substituir a recorrência");
-    VP_EXPECT(repositorio.find_all().size() == 1, "a atualização não deve adicionar outra entidade");
+    VP_EXPECT(updated.has_value(), "o lembrete atualizado deve continuar existindo");
+    VP_EXPECT(updated->id() == id, "a atualização deve preservar o ID");
+    VP_EXPECT(updated->description() == "Atualizado", "a atualização deve substituir a descrição");
+    VP_EXPECT(updated->category() == domain::Category::Work, "a atualização deve substituir a categoria");
+    VP_EXPECT((updated->date() == domain::Date{27, 8, 2026}), "a atualização deve substituir a data");
+    VP_EXPECT(updated->time_slot().start() == std::chrono::hours{14}, "a atualização deve substituir o horário inicial");
+    VP_EXPECT(updated->time_slot().end() == std::chrono::hours{16}, "a atualização deve substituir o horário final");
+    VP_EXPECT(updated->type() == domain::ReminderType::Meeting, "a atualização deve substituir o tipo");
+    VP_EXPECT(updated->recurrence() == domain::ReminderRecurrence::Weekly, "a atualização deve substituir a recorrência");
+    VP_EXPECT(repository.find_all().size() == 1, "a atualização não deve adicionar outra entidade");
 
-    bool inexistente_rejeitado = false;
+    bool unknown_id_rejected = false;
 
     try
     {
-        atualizar.execute(application::UpdateReminderRequest{
-            999,
+        update_reminder.execute(application::UpdateReminderRequest{
+            id + 999,
             "Inexistente",
             domain::Category::Work,
             domain::Date{1, 9, 2026},
@@ -60,17 +63,17 @@ int main()
     }
     catch (const std::runtime_error& error)
     {
-        inexistente_rejeitado = std::string{error.what()} == "Lembrete não encontrado.";
+        unknown_id_rejected = std::string{error.what()} == "Lembrete não encontrado.";
     }
 
-    VP_EXPECT(inexistente_rejeitado, "a atualização deve informar um ID inexistente");
+    VP_EXPECT(unknown_id_rejected, "a atualização deve informar um ID inexistente");
 
-    bool atualizacao_invalida_rejeitada = false;
+    bool invalid_update_rejected = false;
 
     try
     {
-        atualizar.execute(application::UpdateReminderRequest{
-            7,
+        update_reminder.execute(application::UpdateReminderRequest{
+            id,
             " ",
             domain::Category::Health,
             domain::Date{1, 1, 2027},
@@ -80,22 +83,22 @@ int main()
     }
     catch (const shared::DomainError&)
     {
-        atualizacao_invalida_rejeitada = true;
+        invalid_update_rejected = true;
     }
 
-    const auto apos_invalida = repositorio.find_by_id(7);
-    VP_EXPECT(atualizacao_invalida_rejeitada, "a atualização deve rejeitar uma descrição inválida");
-    VP_EXPECT(apos_invalida->description() == "Atualizado", "a atualização rejeitada deve preservar a descrição");
-    VP_EXPECT(apos_invalida->category() == domain::Category::Work, "a atualização rejeitada deve preservar a categoria");
-    VP_EXPECT((apos_invalida->date() == domain::Date{27, 8, 2026}), "a atualização rejeitada deve preservar a data");
-    VP_EXPECT(apos_invalida->time_slot().start() == std::chrono::hours{14},
+    const auto after_invalid = repository.find_by_id(id);
+    VP_EXPECT(invalid_update_rejected, "a atualização deve rejeitar uma descrição inválida");
+    VP_EXPECT(after_invalid->description() == "Atualizado", "a atualização rejeitada deve preservar a descrição");
+    VP_EXPECT(after_invalid->category() == domain::Category::Work, "a atualização rejeitada deve preservar a categoria");
+    VP_EXPECT((after_invalid->date() == domain::Date{27, 8, 2026}), "a atualização rejeitada deve preservar a data");
+    VP_EXPECT(after_invalid->time_slot().start() == std::chrono::hours{14},
     "a atualização rejeitada deve preservar o horário inicial");
 
-    VP_EXPECT(apos_invalida->time_slot().end() == std::chrono::hours{16},
+    VP_EXPECT(after_invalid->time_slot().end() == std::chrono::hours{16},
     "a atualização rejeitada deve preservar o horário final");
-    VP_EXPECT(apos_invalida->type() == domain::ReminderType::Meeting, "a atualização rejeitada deve preservar o tipo");
-    VP_EXPECT(apos_invalida->recurrence() == domain::ReminderRecurrence::Weekly, "a atualização rejeitada deve preservar a recorrência");
-    VP_EXPECT(repositorio.find_all().size() == 1,
+    VP_EXPECT(after_invalid->type() == domain::ReminderType::Meeting, "a atualização rejeitada deve preservar o tipo");
+    VP_EXPECT(after_invalid->recurrence() == domain::ReminderRecurrence::Weekly, "a atualização rejeitada deve preservar a recorrência");
+    VP_EXPECT(repository.find_all().size() == 1,
     "a atualização rejeitada não deve adicionar outra entidade");
 
     return 0;

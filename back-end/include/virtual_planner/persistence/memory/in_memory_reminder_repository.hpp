@@ -11,15 +11,35 @@ namespace virtual_planner::persistence {
 
 // Repositorio de Reminder em memoria.
 //
-// ReminderRepository nao expoe update, entao save faz upsert: substitui quem
-// ja tem o mesmo id e insere caso contrario.
+// save gera o id e insere; update substitui quem ja tem o mesmo id. Espelha
+// InMemoryGoalRepository (issue #90) — antes save fazia upsert e era possivel
+// sobrescrever um lembrete existente sem querer.
 //
 // Nao e thread-safe: o vector interno nao tem lock nenhum. O chamador deve
 // serializar o acesso concorrente.
 class InMemoryReminderRepository final : public ReminderRepository
 {
 public:
-    void save(const domain::Reminder& reminder) override
+    std::uint64_t save(const domain::Reminder& reminder) override
+    {
+        const auto id = next_id_++;
+
+        // Reconstroi campo a campo porque Reminder::id_ e privado sem setter
+        // e o id gerado aqui precisa sobrescrever o que veio na entidade.
+        // Mesma razao do InMemoryGoalRepository.
+        reminders_.emplace_back(
+            id,
+            reminder.description(),
+            reminder.category(),
+            reminder.date(),
+            reminder.time_slot(),
+            reminder.type(),
+            reminder.recurrence());
+
+        return id;
+    }
+
+    void update(const domain::Reminder& reminder) override
     {
         for (auto& current : reminders_)
         {
@@ -29,8 +49,6 @@ public:
                 return;
             }
         }
-
-        reminders_.push_back(reminder);
     }
 
     std::optional<domain::Reminder> find_by_id(std::uint64_t id) override
@@ -66,6 +84,7 @@ public:
 
 private:
     std::vector<domain::Reminder> reminders_;
+    std::uint64_t next_id_{1};
 };
 
 } // namespace virtual_planner::persistence

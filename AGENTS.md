@@ -4,13 +4,15 @@ Este arquivo define agentes especializados para auxiliar o uso de IA no projeto 
 
 ## Contexto Do Projeto
 
-- Projeto acadêmico em C++20.
-- Build com CMake.
+- Monorepo com dois workspaces: `back-end/` (C++20) e `front-end/` (React + TypeScript).
+- Projeto acadêmico em C++20 no back-end.
+- Build com CMake no back-end e Vite no front-end.
 - Núcleo modular com `core`, `domain`, `application`, `interfaces`, `persistence`, `infrastructure` e `shared`.
 - Persistência base vendor-neutral em `persistence::Database`.
 - PostgreSQL integrado como adapter opcional em `infrastructure/postgres`.
 - Suporte PostgreSQL habilitado no build por `VIRTUAL_PLANNER_WITH_POSTGRES=ON`.
 - Conexão PostgreSQL em runtime habilitada por `VP_USE_POSTGRES=true`.
+- Front-end em React 19, TypeScript, Vite e Tailwind CSS v4, hoje consumindo mocks e não a API.
 - Documentação principal em PT-BR.
 - Não há regras de domínio reais, entidades reais, schema real ou repositórios concretos de produto ainda.
 
@@ -307,10 +309,63 @@ Adicionar funcionalidades reais quando o trabalho acadêmico definir domínio, e
 - Criar tabela inicial genérica sem regra de negócio.
 - Colocar validação de domínio no adapter de banco.
 
+## Agent: Especialista Frontend / React + TypeScript
+
+### Objetivo
+
+Evoluir a interface em `front-end/` mantendo tipagem forte, build e lint verdes, e sem antecipar integração com uma API que ainda não existe.
+
+### Quando Usar
+
+- Ao criar ou alterar telas, componentes ou rotas.
+- Ao mexer em tipos compartilhados entre telas.
+- Ao adicionar dependência de frontend.
+- Ao alterar configuração de Vite, TypeScript, ESLint ou Tailwind.
+
+### Arquivos Relevantes
+
+- `front-end/package.json`
+- `front-end/src/components` — componentes reutilizáveis de UI
+- `front-end/src/pages` — telas, uma por rota
+- `front-end/src/lib` — helpers sem JSX
+- `front-end/src/mocks` — dados de exemplo enquanto a API não é consumida
+- `front-end/src/types` — tipos compartilhados entre telas
+- `front-end/vite.config.ts`, `front-end/eslint.config.js`, `front-end/tsconfig*.json`
+- `.github/workflows/frontend.yml`
+
+### Regras Obrigatórias
+
+- Rodar `npm ci` para instalar; `npm install` apenas quando a intenção for alterar dependências.
+- `npm run build` e `npm run lint` precisam passar antes de entregar. São exatamente os dois passos do CI.
+- Não usar `any`. Quando o tipo for realmente desconhecido, use `unknown` e estreite.
+- Não desligar regra de ESLint nem usar `@ts-ignore` para fazer o build passar.
+- Não editar `package-lock.json` à mão; ele muda pelo gerenciador.
+- Não versionar `node_modules/` nem `dist/`.
+- Não colocar segredo em código de frontend: tudo que o Vite expõe com o prefixo `VITE_` chega ao navegador.
+- Manter os mocks em `src/mocks` e isolados das telas, para que trocá-los pela API seja uma mudança local.
+- Nomes de código em inglês, como no back-end.
+
+### Comandos De Validação
+
+```bash
+cd front-end
+npm ci
+npm run build
+npm run lint
+```
+
+### Anti-Padrões
+
+- Chamar a API do back-end antes de existir contrato definido em `docs/api.md`.
+- Duplicar em TypeScript um enum que já tem representação definida no contrato JSON compartilhado — derive do contrato.
+- Componente que acumula fetch, estado e apresentação sem separação nenhuma.
+- Adicionar biblioteca de UI inteira para resolver um componente.
+- Marcar uma tela como pronta sem rodar build e lint.
+
 ## Prompt Base Para Usar Com IA
 
 ```markdown
-Você está trabalhando no projeto Virtual Planner, uma base acadêmica C++20 com CMake.
+Você está trabalhando no projeto Virtual Planner, um monorepo acadêmico com back-end em C++20/CMake (`back-end/`) e front-end em React + TypeScript/Vite (`front-end/`).
 
 Regras principais:
 - Preservar Clean Architecture e vendor neutrality do núcleo.
@@ -319,7 +374,7 @@ Regras principais:
 - Não criar schema, entidades ou repositórios fictícios sem requisito real.
 - Não versionar segredos e não logar senha.
 - Atualizar README/docs quando alterar comportamento, comandos ou arquitetura.
-- Validar com `cmake --build` e `ctest` quando modificar código.
+- Validar com `cmake --build` e `ctest` ao mexer no back-end, e com `npm run build` e `npm run lint` ao mexer no front-end.
 
 Antes de alterar, leia os arquivos relevantes e proponha a menor mudança correta.
 ```
@@ -334,3 +389,4 @@ Antes de alterar, leia os arquivos relevantes e proponha a menor mudança corret
 - Documentação foi atualizada quando necessário.
 - Não foram criadas entidades, migrations ou repositórios fictícfios.
 - A mudança respeita o escopo acadêmico e evita overengineering.
+- Em mudanças de front-end: `npm run build` e `npm run lint` passam, e nem `node_modules/` nem `dist/` foram versionados.

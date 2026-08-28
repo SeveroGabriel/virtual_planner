@@ -10,94 +10,94 @@ namespace {
 
 using Days = std::chrono::sys_days;
 
-Days para_dias_sistema(const domain::Date& data)
+Days to_system_days(const domain::Date& date)
 {
     return Days{
-        std::chrono::year{static_cast<int>(data.year())} /
-        std::chrono::month{data.month()} /
-        std::chrono::day{data.day()}};
+        std::chrono::year{static_cast<int>(date.year())} /
+        std::chrono::month{date.month()} /
+        std::chrono::day{date.day()}};
 }
 
-domain::Date para_data(const Days valor)
+domain::Date to_date(const Days value)
 {
-    const std::chrono::year_month_day data_calendario{valor};
+    const std::chrono::year_month_day calendar_date{value};
 
     return domain::Date{
-        static_cast<std::uint32_t>(static_cast<unsigned>(data_calendario.day())),
-        static_cast<std::uint32_t>(static_cast<unsigned>(data_calendario.month())),
-        static_cast<std::uint32_t>(static_cast<int>(data_calendario.year()))};
+        static_cast<std::uint32_t>(static_cast<unsigned>(calendar_date.day())),
+        static_cast<std::uint32_t>(static_cast<unsigned>(calendar_date.month())),
+        static_cast<std::uint32_t>(static_cast<int>(calendar_date.year()))};
 }
 
-void adicionar_se_na_janela(
-    std::vector<ReminderOccurrence>& ocorrencias,
-    const domain::Reminder& lembrete,
-    const Days ocorrencia,
-    const Days inicio_janela,
-    const Days fim_janela)
+void add_if_within_window(
+    std::vector<ReminderOccurrence>& occurrences,
+    const domain::Reminder& reminder,
+    const Days occurrence,
+    const Days window_start,
+    const Days window_end)
 {
-    if (ocorrencia >= inicio_janela && ocorrencia <= fim_janela)
+    if (occurrence >= window_start && occurrence <= window_end)
     {
-        ocorrencias.push_back(ReminderOccurrence{lembrete, para_data(ocorrencia)});
+        occurrences.push_back(ReminderOccurrence{reminder, to_date(occurrence)});
     }
 }
 
-void adicionar_ocorrencias_intervalo_fixo(
-    std::vector<ReminderOccurrence>& ocorrencias,
-    const domain::Reminder& lembrete,
-    const Days inicio_janela,
-    const Days fim_janela,
-    const std::chrono::days intervalo)
+void add_fixed_interval_occurrences(
+    std::vector<ReminderOccurrence>& occurrences,
+    const domain::Reminder& reminder,
+    const Days window_start,
+    const Days window_end,
+    const std::chrono::days interval)
 {
-    const Days data_base = para_dias_sistema(lembrete.date());
+    const Days base_date = to_system_days(reminder.date());
 
-    for (Days ocorrencia = data_base; ocorrencia <= fim_janela; ocorrencia += intervalo)
+    for (Days occurrence = base_date; occurrence <= window_end; occurrence += interval)
     {
-        adicionar_se_na_janela(
-            ocorrencias, lembrete, ocorrencia, inicio_janela, fim_janela);
+        add_if_within_window(
+            occurrences, reminder, occurrence, window_start, window_end);
     }
 }
 
-void adicionar_ocorrencias_mensais(
-    std::vector<ReminderOccurrence>& ocorrencias,
-    const domain::Reminder& lembrete,
-    const Days inicio_janela,
-    const Days fim_janela)
+void add_monthly_occurrences(
+    std::vector<ReminderOccurrence>& occurrences,
+    const domain::Reminder& reminder,
+    const Days window_start,
+    const Days window_end)
 {
-    const auto data_base = std::chrono::year_month_day{para_dias_sistema(lembrete.date())};
-    const unsigned dia_ancora = static_cast<unsigned>(data_base.day());
+    const auto base_date = std::chrono::year_month_day{to_system_days(reminder.date())};
+    const unsigned anchor_day = static_cast<unsigned>(base_date.day());
 
-    for (std::chrono::year_month mes = data_base.year() / data_base.month();; mes += std::chrono::months{1})
+    for (std::chrono::year_month month = base_date.year() / base_date.month();; month += std::chrono::months{1})
     {
-        const auto data_solicitada = mes / std::chrono::day{dia_ancora};
-        const auto data_valida = data_solicitada.ok()
-            ? data_solicitada
-            : std::chrono::year_month_day{mes / std::chrono::last};
-        const Days ocorrencia{data_valida};
+        const auto requested_date = month / std::chrono::day{anchor_day};
+        const auto valid_date = requested_date.ok()
+            ? requested_date
+            : std::chrono::year_month_day{month / std::chrono::last};
+        const Days occurrence{valid_date};
 
-        if (ocorrencia > fim_janela)
+        if (occurrence > window_end)
         {
             break;
         }
 
-        adicionar_se_na_janela(
-            ocorrencias, lembrete, ocorrencia, inicio_janela, fim_janela);
+        add_if_within_window(
+            occurrences, reminder, occurrence, window_start, window_end);
     }
 }
 
-bool corresponde_aos_filtros(
-    const domain::Reminder& lembrete,
-    const ListRemindersRequest& requisicao)
+bool matches_filters(
+    const domain::Reminder& reminder,
+    const ListRemindersRequest& request)
 {
-    return (!requisicao.type.has_value() || lembrete.type() == *requisicao.type) &&
-           (!requisicao.recurrence.has_value() ||
-            lembrete.recurrence() == *requisicao.recurrence);
+    return (!request.type.has_value() || reminder.type() == *request.type) &&
+           (!request.recurrence.has_value() ||
+            reminder.recurrence() == *request.recurrence);
 }
 
 } // namespace
 
 ListRemindersUseCase::ListRemindersUseCase(
     persistence::ReminderRepository& repository)
-    : repositorio_(repository)
+    : repository_(repository)
 {
 }
 
@@ -110,74 +110,74 @@ std::vector<ReminderOccurrence> ListRemindersUseCase::execute(
             "O início da janela de datas não pode ser posterior ao fim.");
     }
 
-    const Days inicio_janela = para_dias_sistema(request.start_date);
-    const Days fim_janela = para_dias_sistema(request.end_date);
-    std::vector<ReminderOccurrence> ocorrencias;
+    const Days window_start = to_system_days(request.start_date);
+    const Days window_end = to_system_days(request.end_date);
+    std::vector<ReminderOccurrence> occurrences;
 
-    for (const auto& lembrete : repositorio_.find_all())
+    for (const auto& reminder : repository_.find_all())
     {
-        if (!corresponde_aos_filtros(lembrete, request))
+        if (!matches_filters(reminder, request))
         {
             continue;
         }
 
-        switch (lembrete.recurrence())
+        switch (reminder.recurrence())
         {
             case domain::ReminderRecurrence::Once:
-                adicionar_se_na_janela(
-                    ocorrencias,
-                    lembrete,
-                    para_dias_sistema(lembrete.date()),
-                    inicio_janela,
-                    fim_janela);
+                add_if_within_window(
+                    occurrences,
+                    reminder,
+                    to_system_days(reminder.date()),
+                    window_start,
+                    window_end);
                 break;
 
             case domain::ReminderRecurrence::Daily:
-                adicionar_ocorrencias_intervalo_fixo(
-                    ocorrencias,
-                    lembrete,
-                    inicio_janela,
-                    fim_janela,
+                add_fixed_interval_occurrences(
+                    occurrences,
+                    reminder,
+                    window_start,
+                    window_end,
                     std::chrono::days{1});
                 break;
 
             case domain::ReminderRecurrence::Weekly:
-                adicionar_ocorrencias_intervalo_fixo(
-                    ocorrencias,
-                    lembrete,
-                    inicio_janela,
-                    fim_janela,
+                add_fixed_interval_occurrences(
+                    occurrences,
+                    reminder,
+                    window_start,
+                    window_end,
                     std::chrono::days{7});
                 break;
 
             case domain::ReminderRecurrence::Monthly:
-                adicionar_ocorrencias_mensais(
-                    ocorrencias, lembrete, inicio_janela, fim_janela);
+                add_monthly_occurrences(
+                    occurrences, reminder, window_start, window_end);
                 break;
         }
     }
 
     std::sort(
-        ocorrencias.begin(),
-        ocorrencias.end(),
-        [](const ReminderOccurrence& esquerda, const ReminderOccurrence& direita)
+        occurrences.begin(),
+        occurrences.end(),
+        [](const ReminderOccurrence& left, const ReminderOccurrence& right)
         {
-            if (esquerda.occurrence_date != direita.occurrence_date)
+            if (left.occurrence_date != right.occurrence_date)
             {
-                return esquerda.occurrence_date < direita.occurrence_date;
+                return left.occurrence_date < right.occurrence_date;
             }
 
-            if (esquerda.reminder.time_slot().start() !=
-                direita.reminder.time_slot().start())
+            if (left.reminder.time_slot().start() !=
+                right.reminder.time_slot().start())
             {
-                return esquerda.reminder.time_slot().start() <
-                       direita.reminder.time_slot().start();
+                return left.reminder.time_slot().start() <
+                       right.reminder.time_slot().start();
             }
 
-            return esquerda.reminder.id() < direita.reminder.id();
+            return left.reminder.id() < right.reminder.id();
         });
 
-    return ocorrencias;
+    return occurrences;
 }
 
 } // namespace virtual_planner::application

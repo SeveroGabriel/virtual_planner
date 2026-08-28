@@ -6,22 +6,22 @@ namespace virtual_planner::application {
 
 UpdateReminderUseCase::UpdateReminderUseCase(
     persistence::ReminderRepository& repository)
-    : repositorio_(repository)
+    : repository_(repository)
 {
 }
 
 void UpdateReminderUseCase::execute(
     const UpdateReminderRequest& request) const
 {
-    const auto existente = repositorio_.find_by_id(request.id);
+    const auto existing = repository_.find_by_id(request.id);
 
-    if (!existente.has_value())
+    if (!existing.has_value())
     {
         throw std::runtime_error("Lembrete não encontrado.");
     }
 
-    const domain::Reminder atualizado{
-        existente->id(),
+    const domain::Reminder updated{
+        existing->id(),
         request.description,
         request.category,
         request.date,
@@ -29,7 +29,7 @@ void UpdateReminderUseCase::execute(
         request.type,
         request.recurrence};
 
-    repositorio_.save(atualizado);
+    repository_.update(updated);
 }
 
 } // namespace virtual_planner::application

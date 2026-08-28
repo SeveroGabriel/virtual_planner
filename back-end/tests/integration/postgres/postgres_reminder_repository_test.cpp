@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "virtual_planner/infrastructure/postgres/postgres_config.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
@@ -15,14 +16,6 @@ using namespace virtual_planner;
 
 namespace {
 
-constexpr std::array<std::uint64_t, 6> kTestIds{
-    900000000000040001ULL,
-    900000000000040002ULL,
-    900000000000040003ULL,
-    900000000000040004ULL,
-    900000000000040005ULL,
-    900000000000040006ULL};
-
 bool has_postgres_environment()
 {
     return std::getenv("POSTGRES_DB") != nullptr &&
@@ -30,10 +23,14 @@ bool has_postgres_environment()
            std::getenv("POSTGRES_PASSWORD") != nullptr;
 }
 
-void remove_test_reminders(
-    infrastructure::postgres::PostgresReminderRepository& repository)
+// A limpeza usa os ids que o proprio banco gerou nesta execucao. Como cada
+// execucao recebe ids novos (issue #90), nao ha mais risco de uma rodada
+// anterior deixar lixo com id conhecido para trás.
+void remove_saved_reminders(
+    infrastructure::postgres::PostgresReminderRepository& repository,
+    const std::vector<std::uint64_t>& ids)
 {
-    for (const auto id : kTestIds)
+    for (const auto id : ids)
     {
         repository.remove(id);
     }
@@ -102,11 +99,10 @@ int main()
         database.connect();
 
         PostgresReminderRepository repository(database);
-        remove_test_reminders(repository);
 
         const std::array<domain::Reminder, 6> reminders{
             domain::Reminder{
-                kTestIds[0],
+                0,
                 "Reunião do projeto",
                 domain::Category::Work,
                 domain::Date{10, 9, 2026},
@@ -116,7 +112,7 @@ int main()
                 domain::ReminderType::Meeting,
                 domain::ReminderRecurrence::Once},
             domain::Reminder{
-                kTestIds[1],
+                0,
                 "Ligar para fornecedor",
                 domain::Category::PersonalProjects,
                 domain::Date{11, 9, 2026},
@@ -126,7 +122,7 @@ int main()
                 domain::ReminderType::PhoneCall,
                 domain::ReminderRecurrence::Daily},
             domain::Reminder{
-                kTestIds[2],
+                0,
                 "Comprar mantimentos",
                 domain::Category::Leisure,
                 domain::Date{12, 9, 2026},
@@ -136,7 +132,7 @@ int main()
                 domain::ReminderType::Shopping,
                 domain::ReminderRecurrence::Weekly},
             domain::Reminder{
-                kTestIds[3],
+                0,
                 "Revisar anotações de C++",
                 domain::Category::Study,
                 domain::Date{13, 9, 2026},
@@ -146,7 +142,7 @@ int main()
                 domain::ReminderType::Study,
                 domain::ReminderRecurrence::Monthly},
             domain::Reminder{
-                kTestIds[4],
+                0,
                 "Exercício matinal",
                 domain::Category::Health,
                 domain::Date{14, 9, 2026},
@@ -156,7 +152,7 @@ int main()
                 domain::ReminderType::Exercise,
                 domain::ReminderRecurrence::Once},
             domain::Reminder{
-                kTestIds[5],
+                0,
                 "Entregar atividade",
                 domain::Category::College,
                 domain::Date{15, 9, 2026},
@@ -167,16 +163,26 @@ int main()
                 domain::ReminderRecurrence::Daily}};
 
         // Execução
+        std::vector<std::uint64_t> saved_ids;
+        saved_ids.reserve(reminders.size());
+
         for (const auto& reminder : reminders)
         {
-            repository.save(reminder);
+            const auto saved_id = repository.save(reminder);
+
+            VP_EXPECT(
+                saved_id != 0,
+                "save() deve devolver o id gerado pelo banco");
+
+            saved_ids.push_back(saved_id);
         }
 
         // Verificação: todos os valores de ReminderType e ReminderRecurrence
         // são preservados após a persistência.
-        for (const auto& expected : reminders)
+        for (std::size_t index = 0; index < reminders.size(); ++index)
         {
-            const auto stored = repository.find_by_id(expected.id());
+            const auto& expected = reminders[index];
+            const auto stored = repository.find_by_id(saved_ids[index]);
 
             VP_EXPECT(
                 stored.has_value(),
@@ -184,7 +190,7 @@ int main()
 
             expect_reminder(
                 *stored,
-                expected.id(),
+                saved_ids[index],
                 expected.description(),
                 expected.category(),
                 expected.date(),
@@ -200,7 +206,7 @@ int main()
 
         const auto all_reminders = repository.find_all();
 
-        for (const auto id : kTestIds)
+        for (const auto id : saved_ids)
         {
             const auto found = std::any_of(
                 all_reminders.begin(),
@@ -215,10 +221,37 @@ int main()
                 "find_all() deve incluir todos os lembretes salvos pelo teste");
         }
 
-        // Execução: save() com o mesmo id deve atualizar o registro existente
-        // em vez de inserir outro.
+        // Regressão da issue #90: save() sempre insere. Uma entidade que
+        // carrega um id já existente não pode sobrescrever aquele registro.
+        const auto count_before_colliding_save = repository.find_all().size();
+
+        const domain::Reminder colliding{
+            saved_ids[0],
+            "Não deve sobrescrever",
+            domain::Category::Health,
+            domain::Date{29, 2, 2024},
+            domain::TimeSlot{
+                std::chrono::minutes{1439},
+                std::chrono::minutes{1440}},
+            domain::ReminderType::Exercise,
+            domain::ReminderRecurrence::Daily};
+
+        const auto colliding_id = repository.save(colliding);
+        saved_ids.push_back(colliding_id);
+
+        VP_EXPECT(
+            colliding_id != saved_ids[0],
+            "save() deve gerar um id novo, mesmo quando a entidade traz um id existente");
+        VP_EXPECT(
+            repository.find_all().size() == count_before_colliding_save + 1,
+            "save() deve inserir uma linha nova, nunca substituir uma existente");
+        VP_EXPECT(
+            repository.find_by_id(saved_ids[0])->description() == "Reunião do projeto",
+            "save() de uma entidade com id existente não pode alterar aquele registro");
+
+        // update() é a operação que substitui.
         const domain::Reminder updated{
-            kTestIds[0],
+            saved_ids[0],
             "Lembrete atualizado",
             domain::Category::College,
             domain::Date{29, 2, 2024},
@@ -228,9 +261,9 @@ int main()
             domain::ReminderType::Assignment,
             domain::ReminderRecurrence::Monthly};
 
-        repository.save(updated);
+        repository.update(updated);
 
-        const auto reloaded = repository.find_by_id(kTestIds[0]);
+        const auto reloaded = repository.find_by_id(saved_ids[0]);
 
         VP_EXPECT(
             reloaded.has_value(),
@@ -238,7 +271,7 @@ int main()
 
         expect_reminder(
             *reloaded,
-            updated.id(),
+            saved_ids[0],
             updated.description(),
             updated.category(),
             updated.date(),
@@ -247,32 +280,55 @@ int main()
             updated.type(),
             updated.recurrence());
 
-        const auto after_upsert = repository.find_all();
+        const auto after_update = repository.find_all();
         const auto matching_id_count = std::count_if(
-            after_upsert.begin(),
-            after_upsert.end(),
-            [](const domain::Reminder& reminder)
+            after_update.begin(),
+            after_update.end(),
+            [&saved_ids](const domain::Reminder& reminder)
             {
-                return reminder.id() == kTestIds[0];
+                return reminder.id() == saved_ids[0];
             });
 
         VP_EXPECT(
             matching_id_count == 1,
-            "save() com um id existente deve manter apenas um registro");
+            "update() deve manter exatamente um registro com aquele id");
+
+        // update() de um id inexistente não pode criar nada.
+        const auto count_before_unknown_update = repository.find_all().size();
+
+        const domain::Reminder unknown{
+            900000000000049999ULL,
+            "Inexistente",
+            domain::Category::Leisure,
+            domain::Date{1, 3, 2026},
+            domain::TimeSlot{
+                std::chrono::minutes{8 * 60},
+                std::chrono::minutes{9 * 60}},
+            domain::ReminderType::Shopping,
+            domain::ReminderRecurrence::Once};
+
+        repository.update(unknown);
+
+        VP_EXPECT(
+            repository.find_all().size() == count_before_unknown_update,
+            "update() de um id inexistente não deve inserir nada");
+        VP_EXPECT(
+            !repository.find_by_id(900000000000049999ULL).has_value(),
+            "update() não pode criar um lembrete");
 
         // Execução e verificação: remover um id existente ou inexistente deve
         // ser seguro.
-        repository.remove(kTestIds[0]);
+        repository.remove(saved_ids[0]);
         VP_EXPECT(
-            !repository.find_by_id(kTestIds[0]).has_value(),
+            !repository.find_by_id(saved_ids[0]).has_value(),
             "remove() deve excluir um lembrete existente");
 
-        repository.remove(kTestIds[0]);
+        repository.remove(saved_ids[0]);
         VP_EXPECT(
-            !repository.find_by_id(kTestIds[0]).has_value(),
+            !repository.find_by_id(saved_ids[0]).has_value(),
             "remove() de um id inexistente não deve causar alteração");
 
-        remove_test_reminders(repository);
+        remove_saved_reminders(repository, saved_ids);
         database.shutdown();
 
         return 0;

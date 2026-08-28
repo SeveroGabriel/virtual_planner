@@ -15,7 +15,7 @@ public:
     void execute(std::uint64_t id) const;
 
 private:
-    persistence::ReminderRepository& repositorio_;
+    persistence::ReminderRepository& repository_;
 };
 
 } // namespace virtual_planner::application

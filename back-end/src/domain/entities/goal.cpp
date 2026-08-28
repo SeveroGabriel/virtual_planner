@@ -1,20 +1,12 @@
 #include "virtual_planner/domain/entities/goal.hpp"
 
+#include "virtual_planner/domain/text.hpp"
+
 #include <stdexcept>
 #include <utility>
 
 namespace virtual_planner::domain
 {
-
-namespace
-{
-
-bool is_blank(const std::string& value)
-{
-    return value.find_first_not_of(" \t\n\r\f\v") == std::string::npos;
-}
-
-} // namespace
 
 Goal::Goal(
     std::uint64_t id,

@@ -11,9 +11,11 @@ using namespace virtual_planner;
 
 int main()
 {
-    persistence::InMemoryReminderRepository repositorio;
-    repositorio.save(domain::Reminder{
-        5,
+    persistence::InMemoryReminderRepository repository;
+
+    // O id vem do repositorio (issue #90).
+    const auto id = repository.save(domain::Reminder{
+        0,
         "Excluir este lembrete",
         domain::Category::PersonalProjects,
         domain::Date{20, 8, 2026},
@@ -21,23 +23,23 @@ int main()
         domain::ReminderType::PhoneCall,
         domain::ReminderRecurrence::Once});
 
-    application::DeleteReminderUseCase excluir(repositorio);
-    excluir.execute(5);
+    application::DeleteReminderUseCase delete_reminder(repository);
+    delete_reminder.execute(id);
 
-    VP_EXPECT(!repositorio.find_by_id(5).has_value(), "a exclusão deve remover o lembrete existente");
+    VP_EXPECT(!repository.find_by_id(id).has_value(), "a exclusão deve remover o lembrete existente");
 
-    bool inexistente_rejeitado = false;
+    bool unknown_id_rejected = false;
 
     try
     {
-        excluir.execute(5);
+        delete_reminder.execute(id);
     }
     catch (const std::runtime_error& error)
     {
-        inexistente_rejeitado = std::string{error.what()} == "Lembrete não encontrado.";
+        unknown_id_rejected = std::string{error.what()} == "Lembrete não encontrado.";
     }
 
-    VP_EXPECT(inexistente_rejeitado, "a exclusão deve informar um ID inexistente");
+    VP_EXPECT(unknown_id_rejected, "a exclusão deve informar um ID inexistente");
 
     return 0;
 }

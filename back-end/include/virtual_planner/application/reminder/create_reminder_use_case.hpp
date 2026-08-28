@@ -14,7 +14,8 @@ namespace virtual_planner::application {
 
 struct CreateReminderRequest
 {
-    std::uint64_t id;
+    // Sem id: quem gera e o repositorio (issue #90). Antes o chamador
+    // escolhia o id e um id repetido sobrescrevia o lembrete existente.
     std::string description;
     domain::Category category;
     domain::Date date;
@@ -33,7 +34,7 @@ public:
         const CreateReminderRequest& request) const;
 
 private:
-    persistence::ReminderRepository& repositorio_;
+    persistence::ReminderRepository& repository_;
 };
 
 } // namespace virtual_planner::application

@@ -1,5 +1,7 @@
 #include "virtual_planner/domain/entities/user.hpp"
 
+#include "virtual_planner/domain/text.hpp"
+
 #include <stdexcept>
 #include <utility>
 
@@ -42,17 +44,19 @@ namespace virtual_planner::domain {
 
     void User::validate_name(const std::string& name) const
     {
-        if (name.empty())
+        if (is_blank(name))
         {
-            throw std::invalid_argument("User name cannot be empty.");
+            throw std::invalid_argument(
+                "User name cannot be empty or blank.");
         }
     }
 
     void User::validate_email(const std::string& email) const
     {
-        if (email.empty())
+        if (is_blank(email))
         {
-            throw std::invalid_argument("User email cannot be empty.");
+            throw std::invalid_argument(
+                "User email cannot be empty or blank.");
         }
 
         if (email.find('@') == std::string::npos)

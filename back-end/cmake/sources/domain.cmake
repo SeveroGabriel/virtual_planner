@@ -1,5 +1,7 @@
-# Fontes do dominio: enums, value objects e entidades.
+# Fontes do dominio: predicados compartilhados, enums, value objects e entidades.
 virtual_planner_add_sources(
+  domain/text.cpp
+
   domain/enums/category.cpp
   domain/enums/priority.cpp
   domain/enums/task_status.cpp

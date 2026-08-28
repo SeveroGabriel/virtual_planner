@@ -35,7 +35,7 @@ public:
         const ListRemindersRequest& request) const;
 
 private:
-    persistence::ReminderRepository& repositorio_;
+    persistence::ReminderRepository& repository_;
 };
 
 } // namespace virtual_planner::application

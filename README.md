@@ -244,11 +244,41 @@ O planejamento e o estado das tarefas ficam nas issues do GitHub, não neste arq
 
 ## 🖥️ Front-end (Interface do Usuário)
 
-O front-end do Virtual Planner foi construído com **React, TypeScript, Vite e Tailwind CSS v4**. Ele opera de forma independente do back-end.
+O front-end do Virtual Planner foi construído com **React 19, TypeScript, Vite e Tailwind CSS v4**. Hoje ele opera de forma independente do back-end: consome mocks em `front-end/src/mocks`, não a API.
 
-### Como rodar o front-end localmente:
+### Como rodar o front-end localmente
 
-1. Navegue até o diretório do front-end:
-   ```bash
-   cd front-end
-   ```
+```bash
+cd front-end
+npm ci
+npm run dev
+```
+
+`npm ci` instala exatamente o que está em `package-lock.json` — use `npm install` só quando a intenção for alterar dependências.
+
+### Scripts
+
+| Comando | O que faz |
+| --- | --- |
+| `npm run dev` | Servidor de desenvolvimento do Vite, com hot reload |
+| `npm run build` | `tsc -b` seguido do build de produção do Vite |
+| `npm run lint` | ESLint sobre todo o workspace |
+| `npm run preview` | Serve localmente o resultado de `npm run build` |
+
+### Integração contínua
+
+`.github/workflows/frontend.yml` roda em Node 22 a cada push em `main` e a cada pull request que toque `front-end/**`, executando `npm ci`, `npm run build` e `npm run lint`. Rode os três localmente antes de abrir PR: o job falha no primeiro erro de tipo ou de lint.
+
+### Estrutura
+
+```text
+front-end/src
+├── components   # componentes reutilizáveis de UI
+├── pages        # telas, uma por rota
+├── lib          # helpers sem JSX
+├── mocks        # dados de exemplo enquanto a API não é consumida
+├── types        # tipos compartilhados entre telas
+└── assets       # imagens e estáticos
+```
+
+As convenções de front-end estão em [AGENTS.md](AGENTS.md#agent-especialista-frontend--react--typescript) e em [front-end/README.md](front-end/README.md).
