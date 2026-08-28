@@ -218,3 +218,14 @@ Documentos adicionais estão disponíveis na pasta `docs/`:
 - [`back-end/migrations/README.md`](back-end/migrations/README.md): convenção de numeração das migrações.
 
 O planejamento e o estado das tarefas ficam nas issues do GitHub, não neste arquivo.
+
+## 🖥️ Front-end (Interface do Usuário)
+
+O front-end do Virtual Planner foi construído com **React, TypeScript, Vite e Tailwind CSS v4**. Ele opera de forma independente do back-end.
+
+### Como rodar o front-end localmente:
+
+1. Navegue até o diretório do front-end:
+   ```bash
+   cd front-end
+   ```
