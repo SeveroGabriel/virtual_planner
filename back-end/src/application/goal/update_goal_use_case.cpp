@@ -27,6 +27,8 @@ void UpdateGoalUseCase::execute(
 
     goal->change_period(request.period);
 
+    goal->change_reference_date(request.reference_date);
+
     repository_.update(*goal);
 }
 

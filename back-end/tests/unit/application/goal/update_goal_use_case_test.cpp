@@ -15,7 +15,8 @@ int main()
             "Old",
             domain::Category::Study,
             domain::GoalStatus::InProgress,
-            domain::GoalPeriod::Weekly));
+            domain::GoalPeriod::Weekly,
+            domain::Date(10, 8, 2026)));
 
     application::UpdateGoalUseCase update(repository);
 
@@ -23,17 +24,34 @@ int main()
         1,
         "New Description",
         domain::Category::Work,
-        domain::GoalPeriod::Monthly};
+        domain::GoalPeriod::Monthly,
+        domain::Date(20, 8, 2026)
+    };
 
     update.execute(request);
 
     auto goal = repository.find_by_id(1);
 
-    VP_EXPECT(goal.has_value(), "goal must exist after update");
+    VP_EXPECT(
+        goal.has_value(),
+        "goal must exist after update");
 
-    VP_EXPECT(goal->description() ==
-                  "New Description",
-              "updated goal should have the new description");
+    VP_EXPECT(
+        goal->description() == "New Description",
+        "updated goal should have the new description");
+
+    VP_EXPECT(
+        goal->category() == domain::Category::Work,
+        "updated goal should have the new category");
+
+    VP_EXPECT(
+        goal->period() == domain::GoalPeriod::Monthly,
+        "updated goal should have the new period");
+
+    VP_EXPECT(
+        goal->reference_date() == domain::Date(20, 8, 2026),
+        "updated goal should have the new reference date");
 
     return 0;
 }
+

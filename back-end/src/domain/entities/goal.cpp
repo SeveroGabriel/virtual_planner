@@ -21,12 +21,15 @@ Goal::Goal(
     std::string description,
     Category category,
     GoalStatus status,
-    GoalPeriod period)
+    GoalPeriod period,
+    Date reference_date
+)
     : id_(id),
       description_(std::move(description)),
       category_(category),
       status_(status),
-      period_(period)
+      period_(period),
+      reference_date_(reference_date)
 {
     if (is_blank(description_))
     {
@@ -43,6 +46,11 @@ std::uint64_t Goal::id() const
 const std::string& Goal::description() const
 {
     return description_;
+}
+
+const Date& Goal::reference_date() const
+{
+    return reference_date_;
 }
 
 Category Goal::category() const
@@ -99,6 +107,11 @@ void Goal::mark_as_partially_completed()
 void Goal::mark_as_failed()
 {
     status_ = GoalStatus::Failed;
+}
+
+void Goal::change_reference_date(const Date& reference_date)
+{
+    reference_date_ = reference_date;
 }
 
 } // namespace virtual_planner::domain

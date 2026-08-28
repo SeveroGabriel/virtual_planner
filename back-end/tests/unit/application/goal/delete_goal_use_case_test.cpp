@@ -15,7 +15,8 @@ int main()
             "Study C++",
             domain::Category::Study,
             domain::GoalStatus::InProgress,
-            domain::GoalPeriod::Weekly));
+            domain::GoalPeriod::Weekly,
+            domain::Date(10, 8, 2026)));
 
     application::DeleteGoalUseCase remove(repository);
 

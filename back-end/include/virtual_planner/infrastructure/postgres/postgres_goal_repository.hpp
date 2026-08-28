@@ -25,6 +25,10 @@ public:
 
     std::vector<domain::Goal> find_all() override;
 
+    std::vector<domain::Goal> find_by_date_range(
+        const domain::Date& start_date,
+        const domain::Date& end_date) override;
+
     void remove(std::uint64_t id) override;
 
 private:

@@ -10,7 +10,8 @@ int main()
         "Finish C++ Planner",
         Category::Study,
         GoalStatus::InProgress,
-        GoalPeriod::Weekly
+        GoalPeriod::Weekly,
+        Date(10, 8, 2026)
     );
 
     // Constructor and getters
@@ -40,6 +41,11 @@ int main()
         "goal period should be initialized correctly"
     );
 
+    VP_EXPECT(
+        goal.reference_date() == Date(10, 8, 2026),
+        "goal reference date should be initialized correctly"
+    );
+
     // Description
 
     goal.update_description("Finish PostgreSQL integration");
@@ -65,6 +71,15 @@ int main()
     VP_EXPECT(
         goal.period() == GoalPeriod::Monthly,
         "change_period should change the goal period"
+    );
+
+    // Reference date
+
+    goal.change_reference_date(Date(20, 8, 2026));
+
+    VP_EXPECT(
+        goal.reference_date() == Date(20, 8, 2026),
+        "change_reference_date should change the goal reference date"
     );
 
     // Status

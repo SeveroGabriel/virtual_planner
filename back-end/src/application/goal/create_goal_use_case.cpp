@@ -27,7 +27,8 @@ std::uint64_t CreateGoalUseCase::execute(
         request.description,
         request.category,
         domain::GoalStatus::InProgress,
-        request.period);
+        request.period,
+        request.reference_date);
 
     const auto id = repository_.save(goal);
 

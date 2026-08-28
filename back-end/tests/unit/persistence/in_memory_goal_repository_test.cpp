@@ -16,7 +16,8 @@ int main()
         "Finish Paradigms project",
         domain::Category::Study,
         domain::GoalStatus::InProgress,
-        domain::GoalPeriod::Weekly};
+        domain::GoalPeriod::Weekly,
+        domain::Date(10, 8, 2026)};
 
     const auto first_id = repository.save(first);
 
@@ -31,13 +32,15 @@ int main()
     VP_EXPECT(stored->category() == domain::Category::Study, "category should round-trip");
     VP_EXPECT(stored->status() == domain::GoalStatus::InProgress, "status should round-trip");
     VP_EXPECT(stored->period() == domain::GoalPeriod::Weekly, "period should round-trip");
+    VP_EXPECT(stored->reference_date() == domain::Date(10, 8, 2026), "reference date should round-trip");
 
     const domain::Goal second{
         0,
         "Run three times a week",
         domain::Category::Health,
         domain::GoalStatus::InProgress,
-        domain::GoalPeriod::Weekly};
+        domain::GoalPeriod::Weekly,
+        domain::Date(15, 8, 2026)};
 
     const auto second_id = repository.save(second);
 
@@ -49,7 +52,8 @@ int main()
         "Finish Paradigms project early",
         domain::Category::Study,
         domain::GoalStatus::Completed,
-        domain::GoalPeriod::Monthly};
+        domain::GoalPeriod::Monthly,
+        domain::Date(20, 8, 2026)};
 
     repository.update(edited);
 
@@ -60,13 +64,15 @@ int main()
     VP_EXPECT(after_update->status() == domain::GoalStatus::Completed, "update should replace the status");
     VP_EXPECT(after_update->period() == domain::GoalPeriod::Monthly, "update should replace the period");
     VP_EXPECT(repository.find_all().size() == 2, "update must not insert a new goal");
+    VP_EXPECT(after_update->reference_date() == domain::Date(20, 8, 2026), "update should replace the reference date");
 
     const domain::Goal unknown{
         9999,
         "Ghost goal",
         domain::Category::Work,
         domain::GoalStatus::InProgress,
-        domain::GoalPeriod::Yearly};
+        domain::GoalPeriod::Yearly,
+        domain::Date(25, 8, 2026)};
 
     repository.update(unknown);
 

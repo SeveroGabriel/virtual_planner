@@ -6,6 +6,7 @@
 #include "virtual_planner/domain/enums/category.hpp"
 #include "virtual_planner/domain/enums/goal_period.hpp"
 #include "virtual_planner/persistence/goal_repository.hpp"
+#include "virtual_planner/domain/value_objects/date.hpp"
 
 namespace virtual_planner::application {
 
@@ -18,6 +19,8 @@ struct UpdateGoalRequest
     domain::Category category;
 
     domain::GoalPeriod period;
+
+    domain::Date reference_date;
 };
 
 class UpdateGoalUseCase

@@ -32,10 +32,11 @@ ordem de aplicação fica determinada mesmo quando os PRs entram fora de ordem.
 ### Migrations anteriores à convenção
 
 `020_create_goals_table.sql` e `021_add_goals_timestamps_and_checks.sql` são
-anteriores a esta convenção e já foram renumeradas para a faixa de `Goal`, que
-é onde ficam. Elas **não são renumeradas de novo**: renomear uma migration já
-aplicada quebraria o registro em `schema_migrations`. Mudanças novas em `goals`
-usam a faixa 020–029.
+anteriores a esta convenção e foram renumeradas a partir das migrations
+iniciais `001` e `002` para a faixa reservada a `Goal`. Elas **não devem ser
+renumeradas novamente**: renomear uma migration já aplicada quebraria o
+registro em `schema_migrations`. Mudanças novas em `goals` usam a faixa
+020–029.
 
 ### Regra de conflito
 

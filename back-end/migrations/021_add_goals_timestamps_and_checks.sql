@@ -1,6 +1,6 @@
 -- Fixes a mismatch between PostgresGoalRepository::update() (which sets
--- updated_at=CURRENT_TIMESTAMP) and the 001 schema, which never created that
--- column. Applying this against a database that already has 001 is safe:
+-- updated_at=CURRENT_TIMESTAMP) and the 020 schema, which never created that
+-- column. Applying this against a database that already has 020 is safe:
 -- ADD COLUMN ... DEFAULT backfills existing rows, and the CHECK constraints
 -- only reject values that never come from domain::to_string() in the first
 -- place.
