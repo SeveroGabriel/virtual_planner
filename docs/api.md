@@ -324,6 +324,37 @@ nlohmann::json to_json(const domain::TimeSlot& value);
 domain::TimeSlot time_slot_from_json(const nlohmann::json& value);
 ```
 
+## Goal
+
+A representação JSON de `Goal` reutiliza as conversões compartilhadas de
+`Category`, `GoalStatus`, `GoalPeriod` e `Date` definidas em P-29.0.
+
+Exemplo:
+
+```json
+{
+  "id": 42,
+  "description": "Finish C++ Planner",
+  "category": "Study",
+  "status": "In Progress",
+  "period": "Weekly",
+  "reference_date": "2026-08-28"
+}
+```
+
+| Campo | Tipo JSON | Significado |
+|---|---|---|
+| `id` | inteiro sem sinal | Identificador da meta |
+| `description` | string | Descrição da meta |
+| `category` | string | `Category`, usando a representação compartilhada |
+| `status` | string | `GoalStatus`, usando a representação compartilhada |
+| `period` | string | `GoalPeriod`, usando a representação compartilhada |
+| `reference_date` | string | Data de referência em ISO 8601 `YYYY-MM-DD` |
+
+A serialização e a desserialização de `category`, `status`, `period` e
+`reference_date` reutilizam as funções de `shared_json`; `Goal` não redefine
+a representação desses tipos.
+
 ## Exemplo de uso em uma entidade
 
 Este é o padrão que P-29.1 a P-29.4 devem seguir:
