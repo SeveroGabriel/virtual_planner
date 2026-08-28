@@ -3,7 +3,8 @@
 Este documento define o formato JSON usado na fronteira HTTP do backend.
 
 Hoje ele cobre os **tipos compartilhados** — enums e value objects de domínio
-(P-29.0) — e o endpoint `GET /api/health` (P-28). A serialização de cada
+(P-29.0) —, o endpoint `GET /api/health` (P-28) e os endpoints de relatórios
+`GET /api/reports` e `GET /api/dashboard` (P-34). A serialização de cada
 entidade (`Goal`, `Task`, `Reminder`, `User`) é definida pelas issues P-29.1 a
 P-29.4 e deve, obrigatoriamente, reutilizar as regras abaixo. Os endpoints de
 domínio pertencem aos donos de cada módulo. O contrato REST consolidado é
@@ -15,8 +16,12 @@ escrito na P-56.
   e `back-end/src/api/json/shared_json.cpp`
 - Servidor: `back-end/include/virtual_planner/api/http/api_server.hpp` e
   `back-end/src/api/http/api_server.cpp`
+- Relatórios: `back-end/include/virtual_planner/api/http/routes/reporting_routes.hpp`
+  e `back-end/src/api/http/routes/reporting_routes.cpp`
 - Testes: `back-end/tests/unit/api/json/shared_json_test.cpp` e
-  `back-end/tests/integration/api/api_server_test.cpp`
+  `back-end/tests/integration/api/api_server_test.cpp`; os endpoints de
+  relatórios são cobertos por
+  `back-end/tests/integration/api/reporting_routes_test.cpp`
 
 A serialização vive em `api`, não em `domain`: o domínio não conhece JSON e não
 depende de `nlohmann/json`. As conversões reaproveitam `domain::to_string` e os
@@ -81,6 +86,87 @@ A aplicação sobe e responde **sem PostgreSQL**: nesse caso `configured` é
 `false` e o `status` continua `"ok"`, porque não há banco para estar caído.
 
 Rotas não registradas respondem 404.
+
+## `GET /api/reports`
+
+Expõe, sem recalcular na camada HTTP, o resultado do `ReportingService` da
+P-23. Os dois query parameters são obrigatórios:
+
+| Parâmetro | Valores/formato | Significado |
+|---|---|---|
+| `period` | `weekly`, `monthly` ou `yearly` | Período civil que contém a data-âncora |
+| `date` | `YYYY-MM-DD` | Data-âncora ISO 8601 estrita |
+
+A conversão para o intervalo inclusivo usado pelo serviço segue o contrato da
+P-63:
+
+| `period` | `start_date` | `end_date` |
+|---|---|---|
+| `weekly` | segunda-feira ISO da semana de `date` | domingo seguinte |
+| `monthly` | primeiro dia do mês de `date` | último dia do mesmo mês |
+| `yearly` | 1º de janeiro do ano de `date` | 31 de dezembro do mesmo ano |
+
+Exemplo:
+
+```http
+GET /api/reports?period=weekly&date=2026-08-05
+```
+
+Resposta 200 com `Content-Type: application/json`:
+
+```jsonc
+{
+  "start_date": "2026-08-03",
+  "end_date": "2026-08-09",
+  "goals_total": 2,
+  "goals_completed": 1,
+  "goals_partially_completed": 1,
+  "goals_ratio": 0.75,
+  "tasks_total": 3,
+  "tasks_executed": 1,
+  "tasks_partially_executed": 1,
+  "tasks_ratio": 0.5,
+  "most_productive_weeks": [
+    { "label": "2026-W32", "total": 3, "score": 1.5, "ratio": 0.5 }
+  ],
+  "most_productive_months": [
+    { "label": "2026-08", "total": 3, "score": 1.5, "ratio": 0.5 }
+  ],
+  "most_productive_shifts": [
+    { "label": "Morning", "total": 2, "score": 1.5, "ratio": 0.75 }
+  ],
+  "task_categories": [
+    { "label": "Work", "total": 3, "score": 1.5, "ratio": 0.5 }
+  ],
+  "goal_categories": [
+    { "label": "Study", "total": 2, "score": 1.5, "ratio": 0.75 }
+  ],
+  "productivity_index": 0.625
+}
+```
+
+Cada item das listas possui sempre `label`, `total`, `score` e `ratio`. As
+fórmulas, pesos, critérios de empate e ordenação são definidos em
+[`reporting-metrics-contract.md`](reporting-metrics-contract.md); a API apenas
+serializa o resultado do serviço.
+
+Em um período sem dados, as contagens são zero, as listas são vazias e
+`goals_ratio`, `tasks_ratio` e `productivity_index` são `null`. `null` significa
+"não há o que medir"; zero significa que havia itens no período e nenhum foi
+cumprido.
+
+Parâmetros ausentes, um `period` diferente dos três valores permitidos ou uma
+data inexistente/malformada respondem 400 com `code = "validation_error"`.
+
+## `GET /api/dashboard`
+
+Retorna o mesmo payload completo de `GET /api/reports`, mas com `start_date` e
+`end_date` iguais ao dia civil local do servidor no momento da requisição. O
+endpoint não aceita parâmetros e também delega todos os cálculos ao
+`ReportingService`.
+
+Um dia sem dados é uma resposta válida 200, com a mesma semântica de zeros,
+listas vazias e valores `null` descrita acima.
 
 ## Erros
 

@@ -13,6 +13,7 @@
 
 #if defined(VIRTUAL_PLANNER_WITH_HTTP)
 #include "virtual_planner/api/http/api_server.hpp"
+#include "virtual_planner/api/http/routes/reporting_routes.hpp"
 #include "virtual_planner/api/http/server_config.hpp"
 #endif
 
@@ -107,6 +108,8 @@ int main() {
 
     virtual_planner::api::http::ApiServer server(
         config, repositories, health_database, logger, server_config);
+
+    virtual_planner::api::http::register_reporting_routes(server);
 
     const int port = server.bind(server_config);
 
