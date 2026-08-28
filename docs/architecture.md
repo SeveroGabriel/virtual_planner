@@ -222,14 +222,23 @@ ordens de grandeza maior. A decisão não muda, mas o motivo é outro.
 **Consequências.**
 
 - O contrato JSON de #30 (P-29.0) é escrito contra a API do `nlohmann::json`.
-- A dependência entra por `FetchContent` em `back-end/cmake/http.cmake`, ativada
-  pela opção `VIRTUAL_PLANNER_WITH_HTTP`. Com ela em `OFF`, que é o padrão,
-  nenhum `FetchContent_Declare` é avaliado e o build sem rede continua verde.
+- As dependências entram por `FetchContent`, cada uma atrás da sua opção,
+  ambas `OFF` por padrão — com as duas desligadas nenhum `FetchContent_Declare`
+  é avaliado e o build sem rede continua verde:
+  - `nlohmann/json` em `back-end/cmake/json.cmake`, pela opção
+    `VIRTUAL_PLANNER_WITH_JSON`;
+  - `cpp-httplib` em `back-end/cmake/http.cmake`, pela opção
+    `VIRTUAL_PLANNER_WITH_HTTP`, que liga `VIRTUAL_PLANNER_WITH_JSON` junto.
+
+  A separação veio na P-29.0: a serialização compartilhada e as serializações
+  de entidade (P-29.1 a P-29.4) precisam de JSON, mas não do servidor HTTP.
 - `nlohmann/json` é baixado pelo tarball da release (112 KiB, verificado por
   `SHA256`) e não pelo clone git, que ocupa 195 MB por trazer testes e dados de
   benchmark.
-- O PoC `back-end/src/api/health_poc.cpp` não é registrado no CTest e não sobe
-  em CI. Ele existe apenas como prova da decisão.
+- O PoC `back-end/src/api/health_poc.cpp` existiu apenas como prova da decisão e
+  foi removido na P-28, substituído pelo servidor real em
+  `back-end/src/api/http/`. Diferente do PoC, esse servidor é coberto por
+  `api_server_test` no CTest e roda no CI.
 - Trocar de biblioteca depois custa reescrever a camada `src/api/`, não o
   domínio.
 

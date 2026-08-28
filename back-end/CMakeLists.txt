@@ -7,6 +7,15 @@ project(
 )
 
 option(VIRTUAL_PLANNER_WITH_POSTGRES "Build PostgreSQL adapter with libpqxx" OFF)
+option(VIRTUAL_PLANNER_WITH_HTTP "Habilita o PoC HTTP e a dependencia de rede" OFF)
+option(VIRTUAL_PLANNER_WITH_JSON "Habilita a serializacao JSON compartilhada" OFF)
+
+# O servidor HTTP responde com o mesmo JSON compartilhado da P-29.0, entao
+# ligar HTTP liga JSON. O contrario nao vale: a serializacao e util sozinha,
+# por exemplo nos testes de round-trip, sem subir servidor nenhum.
+if(VIRTUAL_PLANNER_WITH_HTTP)
+  set(VIRTUAL_PLANNER_WITH_JSON ON)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -42,9 +51,10 @@ if(VIRTUAL_PLANNER_WITH_POSTGRES)
   include(${VIRTUAL_PLANNER_CMAKE_DIR}/postgres.cmake)
 endif()
 
-# Dependencia HTTP+JSON e PoC de endpoint (ADR-003). O modulo declara a opcao
-# VIRTUAL_PLANNER_WITH_HTTP, OFF por padrao, e so entao baixa qualquer coisa;
-# por isso e incluido sem condicao aqui.
+# Dependencias JSON e HTTP (ADR-003). Cada modulo so baixa algo quando a sua
+# opcao esta ligada, por isso sao incluidos sem condicao aqui. json.cmake vem
+# antes porque o PoC HTTP linka o alvo nlohmann_json que ele cria.
+include(${VIRTUAL_PLANNER_CMAKE_DIR}/json.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/http.cmake)
 
 # ---------------------------------------------------------------------------
@@ -52,6 +62,15 @@ include(${VIRTUAL_PLANNER_CMAKE_DIR}/http.cmake)
 # ---------------------------------------------------------------------------
 add_executable(virtual_planner src/main.cpp)
 target_link_libraries(virtual_planner PRIVATE virtual_planner_core)
+
+# A camada HTTP e opcional: sem ela o executavel continua sendo a mesma
+# composition root, so que sem servidor. O alvo so existe com
+# VIRTUAL_PLANNER_WITH_HTTP=ON, e e ele que define o macro de mesmo nome
+# usado pelos #if de main.cpp.
+if(VIRTUAL_PLANNER_WITH_HTTP)
+  target_link_libraries(virtual_planner PRIVATE virtual_planner_http)
+endif()
+
 virtual_planner_enable_warnings(virtual_planner)
 
 # ---------------------------------------------------------------------------
@@ -69,6 +88,10 @@ include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/tasks.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/reminders.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/users.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/persistence.cmake)
+
+if(VIRTUAL_PLANNER_WITH_JSON)
+  include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/api.cmake)
+endif()
 
 if(VIRTUAL_PLANNER_WITH_POSTGRES)
   include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/postgres.cmake)

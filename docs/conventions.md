@@ -22,6 +22,10 @@
 - Value objects ficam em `domain/value_objects`.
 - Enums de domínio ficam em `domain/enums`.
 - Interfaces de repositório de entidades ficam em `include/virtual_planner/persistence`.
+- Serialização JSON de tipos compartilhados fica em `api/json`, nunca em `domain`.
+- Servidor HTTP e rotas ficam em `api/http`. `httplib` e `nlohmann/json` podem
+  aparecer em `api`, nunca em `domain`, `application`, `core` ou nos contratos
+  base de `persistence`.
 - Testes ficam em `tests/unit` ou `tests/integration`.
 - Documentação fica em `docs`.
 - Adapter PostgreSQL fica em `infrastructure/postgres`.
@@ -89,7 +93,10 @@ trabalhando em módulos diferentes nunca editem a mesma linha:
 - `cmake/sources/*.cmake`: fontes da biblioteca `virtual_planner_core`, por
   camada (`core`, `domain`, `application`, `infrastructure`, `postgres`).
 - `cmake/tests/*.cmake`: alvos de teste, por módulo (`core`, `infrastructure`,
-  `goals`, `tasks`, `reminders`, `users`, `postgres`, `persistence`).
+  `goals`, `tasks`, `reminders`, `users`, `postgres`, `persistence`, `api`).
+- `cmake/json.cmake` e `cmake/http.cmake`: dependências externas opcionais
+  (`nlohmann/json` e `cpp-httplib`), cada uma atrás da sua opção e desligadas
+  por padrão.
 
 ### Como registrar um arquivo de código novo
 

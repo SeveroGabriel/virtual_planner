@@ -47,6 +47,49 @@ jobs:
       - name: Test (Release)
         run: ctest --test-dir back-end/build-release --output-on-failure
 
+  json-and-http:
+    name: Build and test com JSON e HTTP
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # O build padrão é offline e não compila nem a serialização compartilhada
+      # (P-29.0) nem o servidor (P-28): as duas dependem de bibliotecas baixadas
+      # por FetchContent. Sem este job, `shared_json_test` e `api_server_test`
+      # nunca rodariam no CI.
+      #
+      # As duas configurações rodam no mesmo runner, como o job Debug+Release
+      # acima faz.
+
+      # JSON sozinho prova que cmake/json.cmake não depende de http.cmake —
+      # é a configuração que P-29.1 a P-29.4 usam.
+      - name: Configure (Release, só JSON)
+        run: >
+          cmake -S back-end -B back-end/build-json
+          -DCMAKE_BUILD_TYPE=Release
+          -DVIRTUAL_PLANNER_WITH_JSON=ON
+
+      - name: Build (só JSON)
+        run: cmake --build back-end/build-json
+
+      - name: Test (só JSON)
+        run: ctest --test-dir back-end/build-json --output-on-failure
+
+      # HTTP liga JSON junto e acrescenta o servidor. `api_server_test` abre
+      # uma porta efêmera em 127.0.0.1 e fala HTTP de verdade com ela.
+      - name: Configure (Release, com HTTP)
+        run: >
+          cmake -S back-end -B back-end/build-http
+          -DCMAKE_BUILD_TYPE=Release
+          -DVIRTUAL_PLANNER_WITH_HTTP=ON
+
+      - name: Build (com HTTP)
+        run: cmake --build back-end/build-http
+
+      - name: Test (com HTTP)
+        run: ctest --test-dir back-end/build-http --output-on-failure
+
   postgres-integration:
     name: Build and test com PostgreSQL (migrations + integração real)
     runs-on: ubuntu-24.04

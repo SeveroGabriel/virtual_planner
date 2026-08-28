@@ -41,6 +41,17 @@ cmake -S back-end -B back-end/build
 cmake --build back-end/build
 ```
 
+### Com a API HTTP
+
+O servidor e a serialização JSON dependem de bibliotecas baixadas por `FetchContent`, então ficam atrás de uma opção desligada por padrão — o build padrão nunca toca a rede:
+
+```bash
+cmake -S back-end -B back-end/build-http -DVIRTUAL_PLANNER_WITH_HTTP=ON
+cmake --build back-end/build-http
+```
+
+Para compilar apenas a serialização compartilhada, sem o servidor, use `-DVIRTUAL_PLANNER_WITH_JSON=ON`.
+
 ### Com PostgreSQL
 
 É necessário instalar o `libpqxx` antes de compilar:
@@ -70,6 +81,15 @@ Com PostgreSQL:
 ```bash
 VP_USE_POSTGRES=true ./back-end/build-postgres/virtual_planner
 ```
+
+No build padrão, sem a opção `VIRTUAL_PLANNER_WITH_HTTP`, o executável imprime a configuração e encerra. Com a API compilada, ele sobe o servidor:
+
+```bash
+VP_HTTP_HOST=127.0.0.1 VP_HTTP_PORT=8080 ./back-end/build-http/virtual_planner
+curl -s http://127.0.0.1:8080/api/health
+```
+
+`VP_HTTP_HOST` e `VP_HTTP_PORT` são opcionais e caem em `0.0.0.0:8080`. A API sobe e responde mesmo sem PostgreSQL. O contrato das respostas está em [docs/api.md](docs/api.md).
 
 ## Configuração do PostgreSQL
 
@@ -135,6 +155,9 @@ O teste de integração precisa das variáveis `POSTGRES_DB`, `POSTGRES_USER` e 
 .
 ├── back-end
 │   ├── include/virtual_planner
+│   │   ├── api
+│   │   │   ├── http
+│   │   │   └── json
 │   │   ├── application
 │   │   ├── core
 │   │   ├── domain
