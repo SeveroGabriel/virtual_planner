@@ -22,3 +22,8 @@ virtual_planner_add_sources(
 
 # User
 # virtual_planner_add_sources(application/user/...)
+
+# Reporting
+virtual_planner_add_sources(
+  application/reporting/reporting_service.cpp
+)

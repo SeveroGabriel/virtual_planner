@@ -169,6 +169,11 @@ A saída é **completa, não esparsa**: toda categoria que aparece no período e
 inclusive com score zero. Categorias sem nenhum item no período ficam de fora —
 listar as seis sempre encheria o dashboard de zeros sem significado.
 
+Diferente de semanas, meses e turnos, **categorias não são filtradas para o
+máximo**: a lista traz todas, ordenadas por score decrescente. O desempate é
+pelo rótulo em ordem alfabética, e existe só para a saída ser determinística —
+sem ele, duas execuções sobre o mesmo dado poderiam ordenar diferente.
+
 ### 8. Indicador geral de produtividade
 
 ```
@@ -250,7 +255,8 @@ arredonda porque arredondar cedo faz o índice geral divergir da média das part
 
 ## Onde isto vive
 
-- Serviço: `application/reporting` (P-23). Sem SQL e sem HTTP.
+- Serviço: `application/reporting/reporting_service.{hpp,cpp}` (P-23). Sem SQL e
+  sem HTTP. Lê `GoalRepository::find_all()` e `TaskRepository::find_all()`.
 - Endpoints: `api/http`, consumindo o serviço (P-34). **A camada HTTP não
   recalcula nada.**
 - Dashboard: consome o JSON (P-43).

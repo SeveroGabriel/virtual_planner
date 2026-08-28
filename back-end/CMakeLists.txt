@@ -90,6 +90,7 @@ include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/tasks.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/reminders.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/users.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/persistence.cmake)
+include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/reporting.cmake)
 
 if(VIRTUAL_PLANNER_WITH_JSON)
   include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/api.cmake)
