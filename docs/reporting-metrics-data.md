@@ -157,6 +157,12 @@ os que costumam quebrar.
 
 ## Pendências antes da P-23 começar
 
-- [ ] Lacuna A resolvida ou a métrica 5 declarada fora de escopo
-- [ ] Ambiguidades 1 a 5 decididas na P-63 (#38)
-- [ ] Regra de semana definida (lacuna E)
+Todas resolvidas em [reporting-metrics-contract.md](reporting-metrics-contract.md) (P-63).
+
+- [x] Lacuna A: o turno passa a ser **derivado** de `TimeSlot::start()` enquanto a #34 não for entregue
+- [x] Ambiguidades 1 a 5 decididas
+- [x] Lacuna E: a semana é ISO, começando na segunda-feira
+
+As lacunas B (sem `user_id`), C (só `Goal` filtra por intervalo) e D (`Reminder`
+sem status) continuam válidas e estão refletidas no contrato: os relatórios são
+globais e `Reminder` fica fora das métricas de produtividade.

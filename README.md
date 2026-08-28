@@ -120,22 +120,56 @@ Tudo com o prefixo `VITE_` é embutido no bundle e fica visível no navegador. N
 
 ## Docker
 
-Para iniciar o PostgreSQL localmente:
+### Stack completa
+
+De um clone limpo, um comando sobe banco, migrações, API e frontend:
+
+```bash
+docker compose up
+```
+
+| Serviço | Porta | O que é |
+| --- | --- | --- |
+| `postgres` | 5432 | PostgreSQL 16 |
+| `migrate` | — | roda `scripts/db-migrate.sh` uma vez e sai |
+| `api` | 8080 | backend com HTTP e PostgreSQL compilados |
+| `web` | 8081 | build de produção do frontend servido por nginx |
+
+Depois de subir:
+
+```bash
+curl -s http://localhost:8080/api/health   # {"status":"ok", ...}
+open http://localhost:8081                 # frontend
+```
+
+A ordem é garantida por `depends_on` com condição: a API só sobe depois que o banco está saudável **e** as migrações terminaram, e o frontend só depois que a API responde `/api/health`. O `migrate` é idempotente, então repetir `docker compose up` não reaplica nada.
+
+O healthcheck da API confere o campo `status` da resposta, não só o código HTTP — `/api/health` responde 200 mesmo com o banco fora do ar, então checar só o status HTTP não provaria integração.
+
+**Primeiro build demora** (alguns minutos): a imagem do backend compila o `libpqxx` 8.x a partir do código-fonte, porque o Debian empacota a 7.x e o adapter usa a API 8.x. Os builds seguintes reaproveitam a camada.
+
+### Só o banco
+
+Para desenvolver com o backend rodando na máquina:
 
 ```bash
 docker compose up -d postgres
 ```
 
-Comandos úteis:
+### Comandos úteis
 
 ```bash
 docker compose ps
-docker compose logs -f postgres
+docker compose logs -f api
 docker compose stop
 docker compose down
 ```
 
 Use `docker compose down -v` somente para apagar também os dados locais.
+
+### Credenciais
+
+Nenhuma credencial vai para dentro das imagens. Tudo entra por variável de ambiente do compose, com valores de desenvolvimento vindos do `.env.example` da raiz. Troque `POSTGRES_PASSWORD` em qualquer ambiente que não seja a sua máquina.
 
 ## Migrações Do Banco De Dados
 
@@ -254,6 +288,7 @@ Documentos adicionais estão disponíveis na pasta `docs/`:
 - [`docs/api.md`](docs/api.md): contrato JSON, endpoints, erros, CORS e log.
 - [`docs/date-timeslot-contract.md`](docs/date-timeslot-contract.md): contrato público congelado de `Date` e `TimeSlot`.
 - [`docs/reporting-metrics-data.md`](docs/reporting-metrics-data.md): dados necessários e casos de teste das métricas de relatório.
+- [`docs/reporting-metrics-contract.md`](docs/reporting-metrics-contract.md): fórmulas e contrato das métricas de relatório.
 - [`back-end/migrations/README.md`](back-end/migrations/README.md): convenção de numeração das migrações.
 
 O planejamento e o estado das tarefas ficam nas issues do GitHub, não neste arquivo.

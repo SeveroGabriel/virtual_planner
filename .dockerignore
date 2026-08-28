@@ -1,0 +1,25 @@
+# O contexto de build e a raiz do repo, entao tudo que nao for fonte precisa
+# ficar de fora: os diretorios build-* do backend e o node_modules do frontend
+# sozinhos ja passam de centenas de MB e seriam enviados ao daemon a cada build.
+.git
+.github
+.claude
+.agents
+.tokensave
+.superpowers
+.vscode
+.DS_Store
+
+**/build
+**/build-*
+**/node_modules
+**/dist
+front-end/README.md
+
+# Nunca copiar segredo para dentro de uma imagem. Os .env.example ficam de
+# fora tambem: a configuracao entra por variavel de ambiente do compose.
+**/.env
+**/.env.*
+
+docs
+*.md

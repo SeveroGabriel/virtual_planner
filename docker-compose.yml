@@ -1,3 +1,15 @@
+# Stack completa: banco, migrations, API e frontend.
+#
+#   docker compose up
+#
+# A ordem e garantida por depends_on com condicao: a API so sobe depois que o
+# banco esta saudavel E as migrations terminaram; o frontend so depois que a
+# API responde /api/health.
+#
+# Nenhuma credencial esta embutida nas imagens. Os valores abaixo vem do
+# .env.example da raiz e sao de desenvolvimento — troque POSTGRES_PASSWORD em
+# qualquer ambiente que nao seja a sua maquina.
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -14,6 +26,79 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Servico de uma tacada so: aplica as migrations e sai. A API espera pelo
+  # `service_completed_successfully` dele, entao nunca sobe contra um schema
+  # desatualizado. O script e idempotente, entao um `up` repetido nao reaplica
+  # nada.
+  #
+  # Imagem postgres:16 (Debian) e nao a alpine: db-migrate.sh e um script bash
+  # com arrays e mktemp, e a alpine so tem ash.
+  migrate:
+    image: postgres:16
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-virtual_planner}
+      POSTGRES_USER: ${POSTGRES_USER:-virtual_planner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_SSLMODE: disable
+    volumes:
+      - ./scripts:/repo/scripts:ro
+      - ./back-end/migrations:/repo/back-end/migrations:ro
+    command: ["/repo/scripts/db-migrate.sh"]
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: back-end/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      VP_APP_NAME: virtual-planner
+      VP_PROFILE: ${VP_PROFILE:-development}
+      VP_LOG_LEVEL: ${VP_LOG_LEVEL:-info}
+      VP_HTTP_HOST: 0.0.0.0
+      VP_HTTP_PORT: "8080"
+      # A origem do frontend servido pelo compose, mais o servidor de dev do
+      # Vite para quem roda o frontend fora do Docker.
+      VP_HTTP_ALLOWED_ORIGINS: http://localhost:8081,http://localhost:5173
+      VP_USE_POSTGRES: "true"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-virtual_planner}
+      POSTGRES_USER: ${POSTGRES_USER:-virtual_planner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_SSLMODE: disable
+    ports:
+      - "8080:8080"
+    healthcheck:
+      # /api/health responde 200 mesmo com o banco fora do ar, por isso o
+      # healthcheck confere o campo status, e nao so o codigo HTTP.
+      test:
+        - CMD-SHELL
+        - curl -fsS http://127.0.0.1:8080/api/health | grep -q '"status":"ok"'
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: front-end/Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8081:80"
 
 volumes:
   postgres_data:
