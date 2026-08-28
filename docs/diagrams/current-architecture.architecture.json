@@ -3,41 +3,349 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Virtual Planner - Arquitetura Atual",
-    "subtitle": "Dominio inicial, persistencia vendor-neutral e adapter PostgreSQL opcional",
+    "subtitle": "Monorepo com API HTTP, dominio completo e adapters PostgreSQL de Goal e Reminder",
     "output": "current-architecture.html",
-    "viewBox": [1120, 720]
+    "viewBox": [
+      1120,
+      720
+    ]
   },
   "components": [
-    { "id": "main", "type": "backend", "label": "main.cpp", "sublabel": "composition root", "pos": [40, 300], "size": [130, 60] },
-    { "id": "env", "type": "cloud", "label": "Env Config", "sublabel": "EnvironmentConfigLoader", "pos": [230, 300], "size": [150, 60] },
-    { "id": "core", "type": "backend", "label": "core", "sublabel": "AppConfig + profile", "pos": [440, 210], "size": [145, 60] },
-    { "id": "shared", "type": "cloud", "label": "shared", "sublabel": "base errors", "pos": [440, 340], "size": [145, 60] },
-    { "id": "domain", "type": "backend", "label": "domain", "sublabel": "entities + value objects", "pos": [650, 80], "size": [190, 60] },
-    { "id": "application", "type": "backend", "label": "application", "sublabel": "services pending", "pos": [670, 210], "size": [160, 60] },
-    { "id": "interfaces", "type": "messagebus", "label": "interfaces", "sublabel": "stable ports", "pos": [890, 145], "size": [150, 60] },
-    { "id": "persistence", "type": "database", "label": "persistence", "sublabel": "Database + repositories", "pos": [870, 305], "size": [190, 60] },
-    { "id": "pgadapter", "type": "database", "label": "PostgreSQL Adapter", "sublabel": "PostgresDatabase", "pos": [670, 455], "size": [170, 60], "tag": "optional" },
-    { "id": "pqxx", "type": "external", "label": "libpqxx", "sublabel": "compiled with flag", "pos": [910, 455], "size": [130, 60] },
-    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "runtime database", "pos": [910, 580], "size": [130, 60] }
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "front-end",
+      "sublabel": "React + Vite",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "api",
+      "sublabel": "http + json",
+      "pos": [
+        240,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "main",
+      "type": "backend",
+      "label": "main.cpp",
+      "sublabel": "composition root",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "env",
+      "type": "cloud",
+      "label": "Env Config",
+      "sublabel": "EnvironmentConfigLoader",
+      "pos": [
+        230,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "core",
+      "sublabel": "AppConfig + profile",
+      "pos": [
+        440,
+        210
+      ],
+      "size": [
+        145,
+        60
+      ]
+    },
+    {
+      "id": "shared",
+      "type": "cloud",
+      "label": "shared",
+      "sublabel": "errors + Logger",
+      "pos": [
+        440,
+        340
+      ],
+      "size": [
+        145,
+        60
+      ]
+    },
+    {
+      "id": "domain",
+      "type": "backend",
+      "label": "domain",
+      "sublabel": "entities + value objects",
+      "pos": [
+        650,
+        80
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "application",
+      "type": "backend",
+      "label": "application",
+      "sublabel": "casos de uso Goal/Reminder",
+      "pos": [
+        670,
+        210
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "interfaces",
+      "type": "messagebus",
+      "label": "interfaces",
+      "sublabel": "stable ports",
+      "pos": [
+        890,
+        145
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "persistence",
+      "type": "database",
+      "label": "persistence",
+      "sublabel": "contratos + in-memory",
+      "pos": [
+        870,
+        305
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pgadapter",
+      "type": "database",
+      "label": "PostgreSQL Adapter",
+      "sublabel": "Database + Goal/Reminder",
+      "pos": [
+        670,
+        455
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "optional"
+    },
+    {
+      "id": "pqxx",
+      "type": "external",
+      "label": "libpqxx",
+      "sublabel": "compiled with flag",
+      "pos": [
+        910,
+        455
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "runtime database",
+      "pos": [
+        910,
+        580
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Nucleo vendor-neutral", "wraps": ["core", "shared", "domain", "application", "interfaces", "persistence"] },
-    { "kind": "security-group", "label": "Infraestrutura concreta", "wraps": ["env", "pgadapter", "pqxx", "postgres"] }
+    {
+      "kind": "region",
+      "label": "Nucleo vendor-neutral",
+      "wraps": [
+        "core",
+        "shared",
+        "domain",
+        "application",
+        "interfaces",
+        "persistence"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Infraestrutura concreta",
+      "wraps": [
+        "env",
+        "pgadapter",
+        "pqxx",
+        "postgres"
+      ]
+    }
   ],
   "connections": [
-    { "from": "main", "to": "env", "label": "load env", "variant": "emphasis" },
-    { "from": "env", "to": "core", "label": "AppConfig", "variant": "emphasis", "fromSide": "right", "toSide": "left", "route": "orthogonal-h", "labelDy": -42 },
-    { "from": "env", "to": "shared", "label": "errors", "variant": "dashed", "fromSide": "right", "toSide": "left", "route": "orthogonal-h", "labelDy": 42 },
-    { "from": "application", "to": "domain", "label": "uses model", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "route": "orthogonal-v", "labelDx": -44 },
-    { "from": "application", "to": "interfaces", "label": "ports", "variant": "emphasis" },
-    { "from": "application", "to": "persistence", "label": "repo contracts", "variant": "emphasis", "fromSide": "bottom", "toSide": "left", "route": "orthogonal-h", "labelDy": 34 },
-    { "from": "pgadapter", "to": "persistence", "label": "extends", "variant": "security", "fromSide": "top", "toSide": "bottom", "route": "orthogonal-v", "labelDy": -20 },
-    { "from": "pgadapter", "to": "pqxx", "label": "uses", "variant": "dashed" },
-    { "from": "pqxx", "to": "postgres", "label": "SQL", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 24 }
+    {
+      "from": "frontend",
+      "to": "api",
+      "label": "REST/JSON",
+      "variant": "emphasis"
+    },
+    {
+      "from": "main",
+      "to": "api",
+      "label": "monta o servidor",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left",
+      "route": "orthogonal-v"
+    },
+    {
+      "from": "api",
+      "to": "application",
+      "label": "casos de uso",
+      "variant": "emphasis",
+      "route": "orthogonal-v",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "main",
+      "to": "env",
+      "label": "load env",
+      "variant": "emphasis"
+    },
+    {
+      "from": "env",
+      "to": "core",
+      "label": "AppConfig",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "orthogonal-h",
+      "labelDy": -42
+    },
+    {
+      "from": "env",
+      "to": "shared",
+      "label": "errors",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "orthogonal-h",
+      "labelDy": 42
+    },
+    {
+      "from": "application",
+      "to": "domain",
+      "label": "uses model",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "route": "orthogonal-v",
+      "labelDx": -44
+    },
+    {
+      "from": "application",
+      "to": "interfaces",
+      "label": "ports",
+      "variant": "emphasis"
+    },
+    {
+      "from": "application",
+      "to": "persistence",
+      "label": "repo contracts",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "route": "orthogonal-h",
+      "labelDy": 34
+    },
+    {
+      "from": "pgadapter",
+      "to": "persistence",
+      "label": "extends",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "route": "orthogonal-v",
+      "labelDy": -20
+    },
+    {
+      "from": "pgadapter",
+      "to": "pqxx",
+      "label": "uses",
+      "variant": "dashed"
+    },
+    {
+      "from": "pqxx",
+      "to": "postgres",
+      "label": "SQL",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
   ],
   "cards": [
-    { "dot": "emerald", "title": "Dominio", "items": ["User, Task, Goal e Reminder ja modelados", "Date e TimeSlot ficam livres de infraestrutura"] },
-    { "dot": "violet", "title": "Persistencia", "items": ["Database e Transaction continuam vendor-neutral", "User/Task/Goal/ReminderRepository sao contratos"] },
-    { "dot": "rose", "title": "PostgreSQL", "items": ["Adapter opcional via VIRTUAL_PLANNER_WITH_POSTGRES=ON", "Ainda sem schema ou repositories concretos"] }
+    {
+      "dot": "emerald",
+      "title": "API",
+      "items": [
+        "api/http serve /api/health e mapeia erro de dominio",
+        "api/json e a unica serializacao de enums e VOs"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Persistencia",
+      "items": [
+        "Contratos vendor-neutral com implementacao in-memory",
+        "PostgreSQL concreto para Goal e Reminder, com migrations"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Pendente",
+      "items": [
+        "Endpoints de dominio, relatorios e adapters de Task/User",
+        "httplib e nlohmann so entram com as flags de build"
+      ]
+    }
   ]
 }

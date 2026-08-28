@@ -80,8 +80,77 @@ saber; o campo `status` distingue os graus de saúde.
 A aplicação sobe e responde **sem PostgreSQL**: nesse caso `configured` é
 `false` e o `status` continua `"ok"`, porque não há banco para estar caído.
 
-Rotas não registradas respondem 404. O corpo padronizado de erro é assunto da
-P-35.
+Rotas não registradas respondem 404.
+
+## Erros
+
+Toda exceção que escape de um handler é convertida em resposta HTTP por um único
+mapeamento, em `back-end/src/api/http/error_response.cpp`. Um dono de módulo
+**não escreve `try`/`catch` no handler**: basta lançar o erro certo.
+
+| Exceção | Status | `code` |
+|---|---|---|
+| `shared::DomainError` | 400 | `validation_error` |
+| `std::invalid_argument` | 400 | `validation_error` |
+| `shared::NotFoundError` | 404 | `not_found` |
+| `shared::ConflictError` | 409 | `conflict` |
+| qualquer outra | 500 | `internal_error` |
+
+`std::invalid_argument` cobre `Date`, `TimeSlot`, os `*_from_string` dos enums e
+os parsers de `api::json` — todos são entrada malformada do cliente.
+
+Corpo, sempre `application/json`:
+
+```jsonc
+{ "error": { "code": "not_found", "message": "Lembrete não encontrado." } }
+```
+
+O `code` é o identificador estável: ramifique por ele, não pelo texto de
+`message`.
+
+**Nos 500 a mensagem original nunca vai na resposta.** Um `PersistenceError`
+vindo do libpqxx pode carregar a connection string, e um `ConfigError` menciona
+variáveis de ambiente. O cliente recebe uma mensagem genérica; o detalhe
+completo vai para o log do servidor, com nível `ERROR`.
+
+`shared::DomainError` é o erro de validação — não existe um `ValidationError`
+separado. `NotFoundError` e `ConflictError` foram criados nesta issue porque não
+dá para responder 404 ou 409 olhando o texto de um `std::runtime_error`: o
+status precisa vir do tipo.
+
+## CORS
+
+Controlado por `VP_HTTP_ALLOWED_ORIGINS`, uma lista separada por vírgula. O
+padrão é `http://localhost:5173`, o servidor de desenvolvimento do Vite. Um
+único `*` libera qualquer origem.
+
+- A origem permitida é **ecoada** em `Access-Control-Allow-Origin`, em vez de
+  responder `*`: com `*` o navegador recusa requisição com credencial, e a
+  resposta deixaria de servir no dia em que houver login.
+- A resposta ganha `Vary: Origin`, senão um cache intermediário serviria a
+  resposta de uma origem para outra. Ele pode aparecer ao lado do
+  `Vary: Accept-Encoding` do próprio httplib — dois cabeçalhos `Vary` separados
+  equivalem a uma lista única, e isso é HTTP válido.
+- Uma origem não autorizada recebe a resposta normal, **sem** os cabeçalhos de
+  CORS. Quem bloqueia é o navegador, e é assim que CORS funciona.
+- O preflight `OPTIONS` responde 204 com os métodos e `Content-Type` permitidos,
+  ou 403 quando a origem não é autorizada. Sem essa rota, um `PUT`/`DELETE` ou um
+  `POST` com JSON nunca sairia do navegador.
+
+## Log
+
+`VP_LOG_LEVEL` aceita `debug`, `info`, `warning` ou `error`; o padrão é `info` e
+um valor inválido cai no padrão em vez de impedir a subida.
+
+Uma linha por requisição atendida:
+
+```text
+2026-08-28T16:00:00Z INFO request method=GET path=/api/health status=200
+```
+
+Só método, caminho e status. **Corpo, query e cabeçalhos ficam de fora de
+propósito** — é por aí que credencial vaza para o log. Erros 500 geram uma linha
+`ERROR` com o detalhe que foi suprimido da resposta.
 
 ## Regra geral
 

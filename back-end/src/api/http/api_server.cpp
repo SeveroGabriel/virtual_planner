@@ -1,5 +1,7 @@
 #include "virtual_planner/api/http/api_server.hpp"
 
+#include "virtual_planner/api/http/error_response.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <string>
@@ -8,11 +10,18 @@ namespace virtual_planner::api::http {
 
 ApiServer::ApiServer(const core::AppConfig& config,
                      persistence::RepositorySet repositories,
-                     const persistence::Database* database)
+                     const persistence::Database* database,
+                     interfaces::Logger& logger,
+                     ServerConfig server_config)
     : config_(config),
       repositories_(repositories),
-      database_(database)
+      database_(database),
+      logger_(logger),
+      server_config_(std::move(server_config))
 {
+    register_exception_handler();
+    register_cors();
+    register_request_log();
     register_health_route();
 }
 
@@ -24,6 +33,11 @@ httplib::Server& ApiServer::server() noexcept
 const persistence::RepositorySet& ApiServer::repositories() const noexcept
 {
     return repositories_;
+}
+
+const ServerConfig& ApiServer::server_config() const noexcept
+{
+    return server_config_;
 }
 
 int ApiServer::bind(const ServerConfig& config)
@@ -58,6 +72,104 @@ bool ApiServer::listen(const ServerConfig& config)
 void ApiServer::stop()
 {
     server_.stop();
+}
+
+void ApiServer::register_exception_handler()
+{
+    server_.set_exception_handler(
+        [this](const httplib::Request& request,
+               httplib::Response& response,
+               std::exception_ptr error) {
+            const ErrorResponse mapped = map_exception(error);
+
+            // O detalhe do 500 fica so aqui. A resposta leva uma mensagem
+            // generica, porque a original pode carregar connection string ou
+            // nome de variavel de ambiente (issue #31).
+            if (mapped.status >= 500)
+            {
+                std::string detail;
+
+                try
+                {
+                    std::rethrow_exception(error);
+                }
+                catch (const std::exception& thrown)
+                {
+                    detail = thrown.what();
+                }
+                catch (...)
+                {
+                    detail = "excecao desconhecida";
+                }
+
+                logger_.error("unhandled exception",
+                              "method=" + request.method + " path=" +
+                                  request.path + " detail=\"" + detail + "\"");
+            }
+
+            response.status = mapped.status;
+            response.set_content(mapped.to_json(), "application/json");
+        });
+}
+
+void ApiServer::register_cors()
+{
+    // Roda depois do roteamento, entao vale para /api/health, para as rotas
+    // dos donos de modulo e para o 404 padrao — sem ninguem precisar lembrar.
+    server_.set_post_routing_handler(
+        [this](const httplib::Request& request, httplib::Response& response) {
+            const std::string origin = request.get_header_value("Origin");
+
+            if (!server_config_.allows_origin(origin))
+            {
+                return;
+            }
+
+            // Ecoa a origem em vez de devolver "*": com "*" o navegador
+            // recusa requisicao com credencial, e a resposta deixa de servir
+            // para o dia em que houver login.
+            response.set_header("Access-Control-Allow-Origin", origin);
+
+            // Sem Vary, um cache intermediario serviria a resposta de uma
+            // origem para outra.
+            response.set_header("Vary", "Origin");
+        });
+
+    // Preflight: o navegador manda OPTIONS antes de um PUT/DELETE ou de um
+    // POST com Content-Type: application/json. Sem esta rota o servidor
+    // responderia 404 e a requisicao real nunca sairia.
+    server_.Options(".*",
+                    [this](const httplib::Request& request,
+                           httplib::Response& response) {
+                        const std::string origin =
+                            request.get_header_value("Origin");
+
+                        if (!server_config_.allows_origin(origin))
+                        {
+                            response.status = 403;
+                            return;
+                        }
+
+                        response.set_header("Access-Control-Allow-Methods",
+                                            "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+                        response.set_header("Access-Control-Allow-Headers",
+                                            "Content-Type");
+                        response.set_header("Access-Control-Max-Age", "86400");
+                        response.status = 204;
+                    });
+}
+
+void ApiServer::register_request_log()
+{
+    // Uma linha por requisicao atendida. Metodo, caminho e status apenas:
+    // corpo, query e header ficam de fora de proposito, porque e por ai que
+    // credencial vaza para o log (issue #71).
+    server_.set_logger([this](const httplib::Request& request,
+                              const httplib::Response& response) {
+        logger_.info("request",
+                     "method=" + request.method + " path=" + request.path +
+                         " status=" + std::to_string(response.status));
+    });
 }
 
 void ApiServer::register_health_route()

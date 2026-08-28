@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Debug primeiro: build padrão sem otimizações.
       - name: Configure (Debug)
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # O build padrão é offline e não compila nem a serialização compartilhada
       # (P-29.0) nem o servidor (P-28): as duas dependem de bibliotecas baixadas
@@ -90,6 +90,73 @@ jobs:
       - name: Test (com HTTP)
         run: ctest --test-dir back-end/build-http --output-on-failure
 
+  coverage:
+    name: Cobertura de testes
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install gcovr
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcovr
+
+      # Com HTTP ligado para que api/http e api/json entrem na medicao. Sem
+      # isso a cobertura ignoraria toda a camada de fronteira.
+      - name: Configure (com cobertura)
+        run: >
+          cmake -S back-end -B back-end/build-coverage
+          -DCMAKE_BUILD_TYPE=Debug
+          -DVIRTUAL_PLANNER_WITH_COVERAGE=ON
+          -DVIRTUAL_PLANNER_WITH_HTTP=ON
+
+      - name: Build
+        run: cmake --build back-end/build-coverage
+
+      - name: Test
+        run: ctest --test-dir back-end/build-coverage --output-on-failure
+
+      # --exclude tira os testes e as dependencias baixadas por FetchContent:
+      # medir cobertura do proprio teste ou do httplib nao diz nada sobre o
+      # codigo do projeto.
+      - name: Generate coverage report
+        run: |
+          mkdir -p back-end/build-coverage/coverage
+          gcovr \
+            --root back-end \
+            --exclude 'back-end/tests/' \
+            --exclude '.*/_deps/.*' \
+            --html-details back-end/build-coverage/coverage/index.html \
+            --txt back-end/build-coverage/coverage/summary.txt \
+            --print-summary \
+            back-end/build-coverage
+
+      # O numero fica visivel na aba de checks do PR, sem precisar baixar o
+      # artefato. A issue pede visibilidade, nao um gate.
+      - name: Publish coverage to the job summary
+        if: always()
+        run: |
+          {
+            echo '## Cobertura de testes do backend'
+            echo
+            echo '```'
+            cat back-end/build-coverage/coverage/summary.txt
+            echo '```'
+            echo
+            echo 'Meta minima acordada: ver docs/conventions.md.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload HTML report
+        if: always()
+        # v6 e a primeira major desta action em node24: v4 e v5 ainda
+        # declaram node20 (verificado no action.yml de cada tag).
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: back-end/build-coverage/coverage/
+          retention-days: 14
+
   postgres-integration:
     name: Build and test com PostgreSQL (migrations + integração real)
     runs-on: ubuntu-24.04
@@ -121,7 +188,7 @@ jobs:
       LIBPQXX_VERSION: "8.0.2"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # O adapter usa a API libpqxx 8.x: pqxx::params{transaction, ...},
       # result::one_row() e result::no_rows(). Essas APIs NÃO existem no
@@ -139,7 +206,7 @@ jobs:
 
       - name: Cache libpqxx ${{ env.LIBPQXX_VERSION }}
         id: cache-libpqxx
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /opt/libpqxx
           key: libpqxx-${{ env.LIBPQXX_VERSION }}-${{ runner.os }}-ubuntu-24.04

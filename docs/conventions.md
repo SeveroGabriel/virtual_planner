@@ -82,6 +82,39 @@ aqui — nunca o diretório inteiro.
 - Testes de integração PostgreSQL devem depender de banco local descartável ou container, nunca de banco de produção.
 - Testes de integração opcionais devem pular com mensagem clara quando o ambiente não estiver configurado.
 
+## Cobertura de testes
+
+O build padrão não mede cobertura. Para medir localmente:
+
+```bash
+cmake -S back-end -B back-end/build-coverage \
+  -DCMAKE_BUILD_TYPE=Debug -DVIRTUAL_PLANNER_WITH_COVERAGE=ON -DVIRTUAL_PLANNER_WITH_HTTP=ON
+cmake --build back-end/build-coverage
+ctest --test-dir back-end/build-coverage --output-on-failure
+gcovr --root back-end --exclude 'back-end/tests/' --exclude '.*/_deps/.*' --print-summary back-end/build-coverage
+```
+
+`VIRTUAL_PLANNER_WITH_COVERAGE=ON` desliga a otimização e instrumenta a
+biblioteca e os testes. Os flags são `PUBLIC` porque quem linka
+`virtual_planner_core` também precisa do runtime de `gcov`.
+
+O CI roda isso a cada PR no job **Cobertura de testes**: o percentual aparece no
+resumo do job, e o relatório HTML fica como artefato por 14 dias. Testes e
+dependências baixadas por `FetchContent` ficam fora da medição.
+
+### Meta mínima
+
+**Proposta: 85% de linhas em `back-end/src`, ainda pendente de acordo da
+equipe.**
+
+A medição atual, no build padrão sem HTTP, é de **95,2%** (1523 de 1599 linhas).
+A proposta de 85% deixa margem para código novo entrar acompanhado de teste sem
+travar PR por variação pequena, e ainda assim acusa uma queda real.
+
+O CI **não falha** por cobertura baixa — a issue P-52 pede visibilidade primeiro,
+gate depois. Transformar a meta em gate é uma decisão separada, e só faz sentido
+depois que a equipe ratificar o número.
+
 ## Build modular do backend
 
 O `back-end/CMakeLists.txt` é apenas o ponto de composição. Fontes e testes são

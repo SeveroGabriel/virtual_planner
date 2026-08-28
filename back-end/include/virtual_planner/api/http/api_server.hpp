@@ -22,6 +22,7 @@
 
 #include "virtual_planner/api/http/server_config.hpp"
 #include "virtual_planner/core/app_config.hpp"
+#include "virtual_planner/interfaces/logger.hpp"
 #include "virtual_planner/persistence/database.hpp"
 #include "virtual_planner/persistence/repository_set.hpp"
 
@@ -30,17 +31,24 @@ namespace virtual_planner::api::http {
 class ApiServer
 {
 public:
-    // `config` e `database` sao referenciados, nao copiados: precisam viver
-    // mais que o servidor. `database` pode ser nulo — a aplicacao sobe e
-    // responde sem banco nenhum, e `/api/health` reporta isso.
+    // `config`, `database` e `logger` sao referenciados, nao copiados:
+    // precisam viver mais que o servidor. `database` pode ser nulo — a
+    // aplicacao sobe e responde sem banco nenhum, e `/api/health` reporta
+    // isso.
     ApiServer(const core::AppConfig& config,
               persistence::RepositorySet repositories,
-              const persistence::Database* database);
+              const persistence::Database* database,
+              interfaces::Logger& logger,
+              ServerConfig server_config = {});
 
     // Seam para os donos de modulo registrarem os endpoints de dominio.
     [[nodiscard]] httplib::Server& server() noexcept;
 
     [[nodiscard]] const persistence::RepositorySet& repositories() const noexcept;
+
+    // Origens de CORS e host/porta padrao. `bind()` sobrescreve host e porta
+    // com o que receber, mas as origens vem daqui.
+    [[nodiscard]] const ServerConfig& server_config() const noexcept;
 
     // Abre a porta sem comecar a servir. Devolve a porta efetiva — util com
     // `ServerConfig::port == 0`, que pede uma porta efemera ao sistema — ou
@@ -61,9 +69,21 @@ public:
 private:
     void register_health_route();
 
+    // Aplicado a todas as rotas de uma vez: um dono de modulo nao escreve
+    // try/catch no handler, so lanca o erro certo (issue #31).
+    void register_exception_handler();
+
+    // Cabecalhos de CORS em toda resposta e preflight OPTIONS (issue #32).
+    void register_cors();
+
+    // Uma linha por requisicao atendida (issue #71).
+    void register_request_log();
+
     const core::AppConfig& config_;
     persistence::RepositorySet repositories_;
     const persistence::Database* database_;
+    interfaces::Logger& logger_;
+    ServerConfig server_config_;
     httplib::Server server_;
 };
 

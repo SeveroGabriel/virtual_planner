@@ -527,12 +527,12 @@
         <div class="pulse-dot"></div>
         <h1>Virtual Planner - Arquitetura Atual</h1>
       </div>
-      <p class="subtitle">Dominio inicial, persistencia vendor-neutral e adapter PostgreSQL opcional</p>
+      <p class="subtitle">Monorepo com API HTTP, dominio completo e adapters PostgreSQL de Goal e Reminder</p>
     </div>
 
     <!-- Main Diagram -->
     <div class="diagram-container">
-      <svg viewBox="0 0 1120 720" role="img" aria-label="Virtual Planner - Arquitetura Atual — Dominio inicial, persistencia vendor-neutral e adapter PostgreSQL opcional (architecture diagram)">
+      <svg viewBox="0 0 1120 720" role="img" aria-label="Virtual Planner - Arquitetura Atual — Monorepo com API HTTP, dominio completo e adapters PostgreSQL de Goal e Reminder (architecture diagram)">
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -563,6 +563,9 @@
         <text x="208" y="288" class="t-security" font-size="9" font-weight="600">Infraestrutura concreta</text>
 
         <!-- Connection paths (before components for correct z-order) -->
+        <path d="M 190 110 L 240 110" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 105 300 L 105 213 Q 105 205 113 205 L 232 205 Q 240 205 240 197 L 240 110" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 325 140 L 325 167 Q 325 175 333 175 L 742 175 Q 750 175 750 183 L 750 210" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path d="M 170 330 L 230 330" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path d="M 380 330 L 402 330 Q 410 330 410 322 L 410 248 Q 410 240 418 240 L 440 240" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path d="M 380 330 L 402 330 Q 410 330 410 338 L 410 362 Q 410 370 418 370 L 440 370" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
@@ -574,6 +577,16 @@
         <path d="M 975 515 L 975 580" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
+        <rect x="40" y="80" width="150" height="60" rx="6" class="c-mask"/>
+        <rect x="40" y="80" width="150" height="60" rx="6" class="c-frontend" stroke-width="1.5"/>
+        <text x="115" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">front-end</text>
+        <text x="115" y="124" class="t-muted" font-size="9" text-anchor="middle">React + Vite</text>
+
+        <rect x="240" y="80" width="170" height="60" rx="6" class="c-mask"/>
+        <rect x="240" y="80" width="170" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="325" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">api</text>
+        <text x="325" y="124" class="t-muted" font-size="9" text-anchor="middle">http + json</text>
+
         <rect x="40" y="300" width="130" height="60" rx="6" class="c-mask"/>
         <rect x="40" y="300" width="130" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
         <text x="105" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">main.cpp</text>
@@ -592,7 +605,7 @@
         <rect x="440" y="340" width="145" height="60" rx="6" class="c-mask"/>
         <rect x="440" y="340" width="145" height="60" rx="6" class="c-cloud" stroke-width="1.5"/>
         <text x="512.5" y="368" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">shared</text>
-        <text x="512.5" y="384" class="t-muted" font-size="9" text-anchor="middle">base errors</text>
+        <text x="512.5" y="384" class="t-muted" font-size="9" text-anchor="middle">errors + Logger</text>
 
         <rect x="650" y="80" width="190" height="60" rx="6" class="c-mask"/>
         <rect x="650" y="80" width="190" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
@@ -602,7 +615,7 @@
         <rect x="670" y="210" width="160" height="60" rx="6" class="c-mask"/>
         <rect x="670" y="210" width="160" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
         <text x="750" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">application</text>
-        <text x="750" y="254" class="t-muted" font-size="9" text-anchor="middle">services pending</text>
+        <text x="750" y="254" class="t-muted" font-size="9" text-anchor="middle">casos de uso Goal/Reminder</text>
 
         <rect x="890" y="145" width="150" height="60" rx="6" class="c-mask"/>
         <rect x="890" y="145" width="150" height="60" rx="6" class="c-messagebus" stroke-width="1.5"/>
@@ -612,12 +625,12 @@
         <rect x="870" y="305" width="190" height="60" rx="6" class="c-mask"/>
         <rect x="870" y="305" width="190" height="60" rx="6" class="c-database" stroke-width="1.5"/>
         <text x="965" y="333" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">persistence</text>
-        <text x="965" y="349" class="t-muted" font-size="9" text-anchor="middle">Database + repositories</text>
+        <text x="965" y="349" class="t-muted" font-size="9" text-anchor="middle">contratos + in-memory</text>
 
         <rect x="670" y="455" width="170" height="60" rx="6" class="c-mask"/>
         <rect x="670" y="455" width="170" height="60" rx="6" class="c-database" stroke-width="1.5"/>
         <text x="755" y="483" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL Adapter</text>
-        <text x="755" y="499" class="t-muted" font-size="9" text-anchor="middle">PostgresDatabase</text>
+        <text x="755" y="499" class="t-muted" font-size="9" text-anchor="middle">Database + Goal/Reminder</text>
         <text x="755" y="507" class="t-database" font-size="7" text-anchor="middle">optional</text>
 
         <rect x="910" y="455" width="130" height="60" rx="6" class="c-mask"/>
@@ -631,6 +644,12 @@
         <text x="975" y="624" class="t-muted" font-size="9" text-anchor="middle">runtime database</text>
 
         <!-- Connection labels -->
+        <rect x="188.4" y="90" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+        <text x="215" y="100" class="t-backend" font-size="8" text-anchor="middle">REST/JSON</text>
+        <rect x="129.1" y="185" width="86.8" height="14" rx="3" class="c-mask"/>
+        <text x="172.5" y="195" class="t-backend" font-size="8" text-anchor="middle">monta o servidor</text>
+        <rect x="503.7" y="155" width="67.6" height="14" rx="3" class="c-mask"/>
+        <text x="537.5" y="165" class="t-backend" font-size="8" text-anchor="middle">casos de uso</text>
         <rect x="175.8" y="310" width="48.4" height="14" rx="3" class="c-mask"/>
         <text x="200" y="320" class="t-backend" font-size="8" text-anchor="middle">load env</text>
         <rect x="383.4" y="223" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
@@ -652,16 +671,18 @@
 
         <!-- Legend -->
         <text x="40" y="691" class="t-primary" font-size="9" font-weight="600">Legend</text>
-        <rect x="40" y="696" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-        <text x="60" y="704" class="t-muted" font-size="8">Backend</text>
-        <rect x="133" y="696" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
-        <text x="153" y="704" class="t-muted" font-size="8">Cloud</text>
-        <rect x="216" y="696" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
-        <text x="236" y="704" class="t-muted" font-size="8">Message bus</text>
-        <rect x="329" y="696" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-        <text x="349" y="704" class="t-muted" font-size="8">Database</text>
-        <rect x="427" y="696" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
-        <text x="447" y="704" class="t-muted" font-size="8">External</text>
+        <rect x="40" y="696" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+        <text x="60" y="704" class="t-muted" font-size="8">Frontend</text>
+        <rect x="138" y="696" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+        <text x="158" y="704" class="t-muted" font-size="8">Backend</text>
+        <rect x="231" y="696" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+        <text x="251" y="704" class="t-muted" font-size="8">Cloud</text>
+        <rect x="314" y="696" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+        <text x="334" y="704" class="t-muted" font-size="8">Message bus</text>
+        <rect x="427" y="696" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+        <text x="447" y="704" class="t-muted" font-size="8">Database</text>
+        <rect x="525" y="696" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+        <text x="545" y="704" class="t-muted" font-size="8">External</text>
       </svg>
     </div>
 
@@ -670,11 +691,11 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot emerald"></div>
-          <h3>Dominio</h3>
+          <h3>API</h3>
         </div>
         <ul>
-          <li>&bull; User, Task, Goal e Reminder ja modelados</li>
-          <li>&bull; Date e TimeSlot ficam livres de infraestrutura</li>
+          <li>&bull; api/http serve /api/health e mapeia erro de dominio</li>
+          <li>&bull; api/json e a unica serializacao de enums e VOs</li>
         </ul>
       </div>
 
@@ -684,19 +705,19 @@
           <h3>Persistencia</h3>
         </div>
         <ul>
-          <li>&bull; Database e Transaction continuam vendor-neutral</li>
-          <li>&bull; User/Task/Goal/ReminderRepository sao contratos</li>
+          <li>&bull; Contratos vendor-neutral com implementacao in-memory</li>
+          <li>&bull; PostgreSQL concreto para Goal e Reminder, com migrations</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot rose"></div>
-          <h3>PostgreSQL</h3>
+          <h3>Pendente</h3>
         </div>
         <ul>
-          <li>&bull; Adapter opcional via VIRTUAL_PLANNER_WITH_POSTGRES=ON</li>
-          <li>&bull; Ainda sem schema ou repositories concretos</li>
+          <li>&bull; Endpoints de dominio, relatorios e adapters de Task/User</li>
+          <li>&bull; httplib e nlohmann so entram com as flags de build</li>
         </ul>
       </div>
     </div>

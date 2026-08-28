@@ -2,7 +2,9 @@
 
 ## Objetivo
 
-Este projeto é uma base modular de backend em C++20 para um trabalho acadêmico. O código atual define estrutura, contratos, configuração, ciclo de vida de persistência, adapter opcional para PostgreSQL, pontos de entrada para testes e uma primeira modelagem de domínio para planejamento pessoal.
+Este projeto é um monorepo acadêmico com dois workspaces: `back-end/`, uma base modular em C++20 com CMake, e `front-end/`, uma aplicação React + TypeScript com Vite. Este documento descreve o backend; as convenções de frontend estão em [AGENTS.md](../AGENTS.md).
+
+O código atual define estrutura, contratos, configuração, ciclo de vida de persistência, adapters PostgreSQL de `Goal` e `Reminder`, uma camada de API HTTP com serialização JSON compartilhada, casos de uso de `Goal` e `Reminder`, e a modelagem de domínio completa de planejamento pessoal.
 
 A arquitetura deve continuar pragmática: manter limites claros, mas evitar frameworks, padrões ou infraestrutura além do que o trabalho realmente precisa.
 
@@ -10,11 +12,12 @@ A arquitetura deve continuar pragmática: manter limites claros, mas evitar fram
 
 - `core`: primitivas usadas por toda a aplicação, como perfil de execução e configuração imutável de inicialização.
 - `domain`: entidades, value objects, enums e regras básicas de domínio. Não deve depender de infraestrutura nem de detalhes de persistência.
-- `application`: espaço reservado para casos de uso e serviços de aplicação que coordenam operações do domínio por meio de interfaces.
-- `interfaces`: portas estáveis usadas pelas camadas internas para evitar acoplamento com tecnologias concretas.
-- `persistence`: abstrações do ciclo de vida de armazenamento, transação e contratos relacionados. Não deve conhecer PostgreSQL.
-- `infrastructure`: adaptadores para variáveis de ambiente, PostgreSQL, logging, caches e outros detalhes externos.
-- `shared`: primitivas transversais que não pertencem a uma camada específica, como exceções base.
+- `application`: casos de uso que coordenam o domínio por meio de contratos. Hoje cobre `Goal` (criar, listar, atualizar, mudar status, excluir) e `Reminder` (criar, listar com expansão de recorrência, atualizar, excluir). `Task` e `User` ainda não têm casos de uso.
+- `interfaces`: portas estáveis usadas pelas camadas internas para evitar acoplamento com tecnologias concretas — hoje `ConfigProvider` e `Logger`.
+- `persistence`: abstrações do ciclo de vida de armazenamento, transação e contratos de repositório, com implementações em memória em `persistence/memory`. Não deve conhecer PostgreSQL.
+- `api`: camada de fronteira HTTP. `api/json` é a **única** serialização de enums e value objects do projeto; `api/http` tem o servidor, a configuração de rede e o mapeamento de erro de domínio para status. É a única camada onde `httplib` e `nlohmann/json` podem aparecer.
+- `infrastructure`: adaptadores para variáveis de ambiente, PostgreSQL e log.
+- `shared`: primitivas transversais que não pertencem a uma camada específica, como as exceções base.
 
 ## Regra de Dependência
 
@@ -26,22 +29,34 @@ As dependências devem apontar para dentro, na direção das políticas mais est
 - `persistence::Database` e `persistence::Transaction` não devem incluir headers de PostgreSQL.
 - `interfaces` deve permanecer pequena e estável.
 - `infrastructure` pode depender de `core`, `interfaces`, `persistence` e `shared` para adaptar detalhes externos.
-- `main` é a raiz de composição, onde as implementações concretas são conectadas.
+- `api` pode depender de `core`, `domain`, `application`, `persistence`, `interfaces` e `shared`. **Nenhuma delas pode depender de `api`**: a serialização e o protocolo são detalhes de fronteira, e o domínio não sabe que existe HTTP.
+- `httplib` e `nlohmann/json` só podem aparecer sob `api`. Nenhum header de HTTP ou JSON entra em `domain`, `application`, `core`, `interfaces` ou nos contratos base de `persistence`.
+- `main` é a raiz de composição, onde as implementações concretas são conectadas. É o único lugar que escolhe entre repositório em memória e PostgreSQL.
 
 ## Diagrama De Dependências
 
 ```text
-domain/application
+front-end (React)
+      |  REST/JSON
+      v
+api/http + api/json  ......  httplib + nlohmann (só aqui)
       |
       v
-interfaces + persistence abstractions
-      ^
-      |
-infrastructure/postgres
+application (casos de uso)
       |
       v
-libpqxx/libpq
+domain  +  interfaces + persistence abstractions
+                        ^
+                        |
+              infrastructure/postgres
+                        |
+                        v
+                  libpqxx/libpq
 ```
+
+O diagrama visual fica em `docs/diagrams/current-architecture.webp`, gerado por
+Archify a partir de `docs/diagrams/current-architecture.architecture.json`. O
+JSON é a fonte de verdade: edite-o e regenere, nunca edite o HTML à mão.
 
 ## Persistência
 

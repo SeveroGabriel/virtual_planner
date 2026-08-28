@@ -31,6 +31,7 @@ if(VIRTUAL_PLANNER_WITH_HTTP)
   add_library(virtual_planner_http
     ${VIRTUAL_PLANNER_SOURCE_DIR}/api/http/server_config.cpp
     ${VIRTUAL_PLANNER_SOURCE_DIR}/api/http/api_server.cpp
+    ${VIRTUAL_PLANNER_SOURCE_DIR}/api/http/error_response.cpp
   )
 
   target_link_libraries(virtual_planner_http

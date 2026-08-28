@@ -20,12 +20,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Mesma major usada em desenvolvimento local, para evitar divergencia
       # entre o que roda no CI e o que os devs testam na maquina.
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

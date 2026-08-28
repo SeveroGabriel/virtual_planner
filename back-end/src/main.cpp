@@ -5,6 +5,7 @@
 // servidor HTTP sobe. Nenhuma camada abaixo conhece essa decisao.
 
 #include "virtual_planner/infrastructure/config/environment_config_loader.hpp"
+#include "virtual_planner/infrastructure/logging/console_logger.hpp"
 #include "virtual_planner/persistence/database.hpp"
 #include "virtual_planner/persistence/memory/repositories.hpp"
 #include "virtual_planner/persistence/repository_set.hpp"
@@ -45,8 +46,15 @@ int main() {
     const virtual_planner::infrastructure::config::EnvironmentConfigLoader loader;
     const auto config = loader.load();
 
-    std::cout << config.app_name() << " running in "
-              << virtual_planner::core::to_string(config.profile()) << " profile\n";
+    virtual_planner::infrastructure::logging::ConsoleLogger logger(
+        virtual_planner::infrastructure::logging::ConsoleLogger::level_from_environment());
+
+    logger.info(
+        "starting",
+        "app=" + config.app_name() + " profile=" +
+            std::string{virtual_planner::core::to_string(config.profile())} +
+            " log_level=" +
+            std::string{virtual_planner::interfaces::to_string(logger.minimum())});
 
     // In-memory e o padrao. Task e User continuam in-memory mesmo com o banco
     // ligado, porque essas duas entidades ainda nao tem adapter PostgreSQL.
@@ -75,7 +83,7 @@ int main() {
       database.emplace(
           virtual_planner::infrastructure::postgres::PostgresConfig::from_environment());
       database->connect();
-      std::cout << "PostgreSQL connection established\n";
+      logger.info("postgres connected");
 
       postgres_goals.emplace(*database);
       postgres_reminders.emplace(*database);
@@ -87,8 +95,8 @@ int main() {
 #else
     if (postgres_enabled())
     {
-      std::cerr << "PostgreSQL support was not compiled. Rebuild with "
-                << "-DVIRTUAL_PLANNER_WITH_POSTGRES=ON\n";
+      logger.error("PostgreSQL support was not compiled. Rebuild with "
+                   "-DVIRTUAL_PLANNER_WITH_POSTGRES=ON");
       return 1;
     }
 #endif
@@ -97,35 +105,39 @@ int main() {
     const auto server_config =
         virtual_planner::api::http::ServerConfig::from_environment();
 
-    virtual_planner::api::http::ApiServer server(config, repositories, health_database);
+    virtual_planner::api::http::ApiServer server(
+        config, repositories, health_database, logger, server_config);
 
     const int port = server.bind(server_config);
 
     if (port < 0)
     {
-      std::cerr << "Failed to bind " << server_config.host << ':'
-                << server_config.port << ".\n";
+      logger.error("failed to bind",
+                   "host=" + server_config.host + " port=" +
+                       std::to_string(server_config.port));
       return 1;
     }
 
-    std::cout << "Serving http://" << server_config.host << ':' << port
-              << "/api/health\n";
+    logger.info("serving",
+                "host=" + server_config.host + " port=" + std::to_string(port) +
+                    " health=/api/health");
 
     if (!server.serve())
     {
-      std::cerr << "HTTP server stopped with an error.\n";
+      logger.error("HTTP server stopped with an error");
       return 1;
     }
 #else
-    std::cout << "HTTP server was not compiled. Rebuild with "
-              << "-DVIRTUAL_PLANNER_WITH_HTTP=ON to serve /api/health\n";
+    logger.info("HTTP server was not compiled. Rebuild with "
+                "-DVIRTUAL_PLANNER_WITH_HTTP=ON to serve /api/health");
 #endif
 
     return 0;
   }
   catch (const virtual_planner::shared::ApplicationError &error)
   {
-    // As mensagens de PostgresConfig ja vem com a senha mascarada.
+    // As mensagens de PostgresConfig ja vem com a senha mascarada. Aqui
+    // ainda pode nao haver logger construido, entao vai direto no stderr.
     std::cerr << "Startup failed: " << error.what() << '\n';
     return 1;
   }

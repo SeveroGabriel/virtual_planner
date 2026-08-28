@@ -9,6 +9,7 @@ project(
 option(VIRTUAL_PLANNER_WITH_POSTGRES "Build PostgreSQL adapter with libpqxx" OFF)
 option(VIRTUAL_PLANNER_WITH_HTTP "Habilita o PoC HTTP e a dependencia de rede" OFF)
 option(VIRTUAL_PLANNER_WITH_JSON "Habilita a serializacao JSON compartilhada" OFF)
+option(VIRTUAL_PLANNER_WITH_COVERAGE "Instrumenta o build para medir cobertura" OFF)
 
 # O servidor HTTP responde com o mesmo JSON compartilhado da P-29.0, entao
 # ligar HTTP liga JSON. O contrario nao vale: a serializacao e util sozinha,
@@ -41,6 +42,7 @@ target_include_directories(virtual_planner_core
 )
 
 virtual_planner_enable_warnings(virtual_planner_core)
+virtual_planner_enable_coverage(virtual_planner_core)
 
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/sources/core.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/sources/domain.cmake)

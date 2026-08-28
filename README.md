@@ -102,7 +102,21 @@ As configurações são feitas por variáveis de ambiente:
 - `POSTGRES_PASSWORD`: senha.
 - `POSTGRES_SSLMODE`: padrão `disable`.
 
-Use o arquivo `.env.example` como referência. Não envie o arquivo `.env` para o Git.
+## Variáveis De Ambiente
+
+Existe um `.env.example` por workspace, cada um com um escopo:
+
+| Arquivo | Alimenta | Contém |
+| --- | --- | --- |
+| `.env.example` (raiz) | `docker-compose.yml` | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` — os três valores que **criam** o banco no container |
+| `back-end/.env.example` | o executável do backend e `scripts/db-migrate.sh` | `VP_*` (nome, perfil, host e porta HTTP) e `POSTGRES_*` — em qual banco **conectar** |
+| `front-end/.env.example` | o build do Vite | nada por enquanto: o frontend ainda não lê variável nenhuma. O arquivo fixa as regras do prefixo `VITE_` |
+
+`POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD` aparecem em dois arquivos de propósito — criar o banco e conectar nele são coisas diferentes. Se mudar de um lado, mude do outro.
+
+Copie o `.env.example` de cada workspace para `.env` no mesmo diretório e ajuste os valores. Nenhum `.env` vai para o Git: o `.gitignore` ignora `.env` e `.env.*`, com exceção explícita para `.env.example`.
+
+Tudo com o prefixo `VITE_` é embutido no bundle e fica visível no navegador. Nunca coloque senha ou token em `front-end/.env`.
 
 ## Docker
 
@@ -237,7 +251,9 @@ Documentos adicionais estão disponíveis na pasta `docs/`:
 - [`docs/conventions.md`](docs/conventions.md): convenções de código, testes e build.
 - [`docs/persistence-architecture.md`](docs/persistence-architecture.md): camada de persistência.
 - [`docs/postgresql.md`](docs/postgresql.md): uso do PostgreSQL.
+- [`docs/api.md`](docs/api.md): contrato JSON, endpoints, erros, CORS e log.
 - [`docs/date-timeslot-contract.md`](docs/date-timeslot-contract.md): contrato público congelado de `Date` e `TimeSlot`.
+- [`docs/reporting-metrics-data.md`](docs/reporting-metrics-data.md): dados necessários e casos de teste das métricas de relatório.
 - [`back-end/migrations/README.md`](back-end/migrations/README.md): convenção de numeração das migrações.
 
 O planejamento e o estado das tarefas ficam nas issues do GitHub, não neste arquivo.
