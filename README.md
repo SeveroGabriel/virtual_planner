@@ -2,7 +2,7 @@
 
 Virtual Planner é um projeto acadêmico desenvolvido em C++20 para ajudar no planejamento pessoal.
 
-O domínio cobre usuários, tarefas, metas e lembretes. Sobre ele já existem casos de uso de Goal e Reminder, um serviço de relatórios, uma API HTTP que serve o CRUD de metas mais relatórios e dashboard, e adapters PostgreSQL para Goal e Reminder. O front-end em React consome mocks e ainda não chama a API.
+O domínio cobre usuários, tarefas, metas e lembretes. Sobre ele já existem casos de uso de Goal e Reminder, um serviço de relatórios, uma API HTTP que serve o CRUD de metas mais relatórios e dashboard, e adapters PostgreSQL para Goal e Reminder. O front-end em React já consome a API nas telas de metas, com tela de login; tarefas e lembretes seguem em mocks, porque ainda não há endpoints para eles.
 
 O build padrão continua sem rede e sem banco: HTTP, JSON, PostgreSQL e cobertura são opções desligadas por padrão.
 
@@ -113,6 +113,7 @@ Endpoints disponíveis hoje:
 | `POST /api/auth/register` | cria uma conta; senha com no mínimo 12 caracteres |
 | `POST /api/auth/login` | devolve o cookie `vp_session` |
 | `POST /api/auth/logout` | invalida a sessão |
+| `GET /api/auth/me` | quem está logado |
 | `GET /api/goals?period=&date=` | lista metas do período civil (`weekly`, `monthly` ou `yearly`) |
 | `GET /api/goals/:id` | busca uma meta |
 | `POST /api/goals` | cria uma meta |
@@ -155,7 +156,7 @@ Existe um `.env.example` por workspace, cada um com um escopo:
 | --- | --- | --- |
 | `.env.example` (raiz) | `docker-compose.yml` | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` — os três valores que **criam** o banco no container |
 | `back-end/.env.example` | o executável do backend e `scripts/db-migrate.sh` | `VP_*` (nome, perfil, host e porta HTTP) e `POSTGRES_*` — em qual banco **conectar** |
-| `front-end/.env.example` | o build do Vite | nada por enquanto: o frontend ainda não lê variável nenhuma. O arquivo fixa as regras do prefixo `VITE_` |
+| `front-end/.env.example` | o build do Vite | `VITE_API_URL` — a base da API. O `.env.development`, versionado, já traz `/api` para o `npm run dev` funcionar sem passo manual |
 
 `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD` aparecem em dois arquivos de propósito — criar o banco e conectar nele são coisas diferentes. Se mudar de um lado, mude do outro.
 
@@ -618,7 +619,7 @@ O planejamento e o estado das tarefas ficam nas issues do GitHub, não neste arq
 
 ## 🖥️ Front-end (Interface do Usuário)
 
-O front-end do Virtual Planner foi construído com **React 19, TypeScript, Vite e Tailwind CSS v4**. Hoje ele opera de forma independente do back-end: consome mocks em `front-end/src/mocks`, não a API.
+O front-end do Virtual Planner foi construído com **React 19, TypeScript, Vite e Tailwind CSS v4**. As telas de metas consomem a API; tarefas e lembretes ainda leem os mocks de `front-end/src/mocks`, porque não existem endpoints para eles.
 
 As rotas ficam em `src/App.tsx`, dentro de um `AppShell` com sidebar e alternância de tema:
 
@@ -631,6 +632,7 @@ As rotas ficam em `src/App.tsx`, dentro de um `AppShell` com sidebar e alternân
 | `/reminders`, `/reminders/new`, `/reminders/:id/edit` | lembretes |
 | `/reports` | painel analítico |
 | `/profile`, `/settings` | perfil e ajustes |
+| `/login` | entrada e criação de conta, fora do `AppShell` |
 
 ### Como rodar o front-end localmente
 
@@ -655,74 +657,77 @@ npm run dev
 
 `.github/workflows/frontend.yml` roda em Node 22 a cada push em `main` e a cada pull request que toque `front-end/**`, executando `npm ci`, `npm run build` e `npm run lint`. Rode os três localmente antes de abrir PR: o job falha no primeiro erro de tipo ou de lint.
 
-### Ligando o front-end à API
+### Front-end ligado à API
 
-As telas de **metas** já consomem o backend de verdade quando `VITE_API_URL`
-está definida. Sem a variável, caem nos mocks — que é o padrão, para um clone
-limpo rodar sem backend.
+**Já vem configurado.** Não há passo manual: `front-end/.env.development` é
+versionado com `VITE_API_URL=/api`, o `vite.config.ts` faz proxy de `/api` para
+`http://127.0.0.1:8080`, e o `docker compose` passa a mesma coisa para o build
+do `web`, com o nginx fazendo o proxy.
 
-`Task` e `Reminder` continuam em mock mesmo com a variável definida: não existem
-endpoints para eles ainda. A escolha fica em `src/lib/api/virtualPlannerApi.ts`,
-num lugar só, então ligar o resto depois é mudança de um arquivo.
-
-**Em desenvolvimento**, com o backend rodando em `127.0.0.1:8080`:
+Com o backend de pé, basta:
 
 ```bash
 cd front-end
-echo 'VITE_API_URL=/api' > .env
+npm ci
 npm run dev
 ```
 
-O `vite.config.ts` faz proxy de `/api` para o backend. **Use o caminho
-relativo, não a URL absoluta** — e o motivo não é estilo: o cookie de sessão é
-`SameSite=Strict` e só viaja em requisição do mesmo site. Apontando
-`VITE_API_URL` direto para `http://127.0.0.1:8080`, o login responde 204 e
-**todas** as chamadas seguintes voltam 401, porque o cookie fica para trás. É
-uma falha silenciosa e confusa; o proxy a elimina.
+A tela de login aparece, você cria a conta ali mesmo e cai no dashboard. As
+telas de **metas** leem e gravam no backend de verdade.
 
-Para apontar o proxy a outro endereço, use `VP_API_TARGET`.
+Para trabalhar sem backend, comente `VITE_API_URL` em `.env.development` e tudo
+volta aos mocks.
 
-**No `docker compose`**, já vem configurado: o build do `web` recebe
-`VITE_API_URL=/api` e o `nginx.conf` faz o proxy para o serviço `api`. Front e
-backend ficam na mesma origem, sem CORS e sem cookie cross-site.
+#### Por que o caminho é relativo, e não a URL do backend
 
-**Ainda não há tela de login.** Enquanto ela não existir, autentique pelo
-console do navegador uma vez por sessão:
-
-```js
-await fetch("/api/auth/register", {
-  method: "POST",
-  credentials: "include",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ name: "Alice", email: "alice@example.com",
-                         password: "uma-senha-de-verdade" }),
-});
-await fetch("/api/auth/login", {
-  method: "POST",
-  credentials: "include",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email: "alice@example.com",
-                         password: "uma-senha-de-verdade" }),
-});
-```
-
-Sem isso as telas mostram lista vazia e um `401` no console. É a próxima peça
-a construir.
+O cookie de sessão é `SameSite=Strict`: o navegador só o envia em requisição do
+mesmo site. Apontando `VITE_API_URL` para `http://127.0.0.1:8080` a partir de
+`localhost:5173`, o login responde `204` e **todas** as chamadas seguintes
+voltam `401`, porque o cookie fica para trás. O proxy elimina isso ao deixar
+front e backend na mesma origem. Para mudar o alvo do proxy, use
+`VP_API_TARGET`.
 
 #### Como está montado
 
 ```text
-front-end/src/lib/api
-├── config.ts             # lê VITE_API_URL e decide backend ou mock
-├── httpClient.ts         # fetch com credentials, e erro da API vira ApiError
-├── goalsApi.ts           # endpoints de Goal
-├── authApi.ts            # register, login, logout
-└── virtualPlannerApi.ts  # fachada das telas: roteia Goal, mantém o resto mock
+front-end/src
+├── lib/api
+│   ├── config.ts             # lê VITE_API_URL e decide backend ou mock
+│   ├── httpClient.ts         # fetch com credentials; erro da API vira ApiError
+│   ├── goalsApi.ts           # endpoints de Goal
+│   ├── authApi.ts            # register, login, logout
+│   ├── session.ts            # quem está logado, via GET /api/auth/me
+│   └── virtualPlannerApi.ts  # fachada: roteia Goal, mantém o resto em mock
+├── components/RequireSession.tsx   # guarda: sem sessão, manda para /login
+└── pages/LoginPage.tsx             # login e criação de conta
 ```
 
-O `httpClient` usa `credentials: "include"` em toda requisição. Sem isso o
-navegador não envia o cookie `HttpOnly` da sessão, e nada funciona. Não há token
-em `localStorage` de propósito: é o que impede um XSS de roubar a sessão.
+Não há token em `localStorage` de propósito: a sessão é um cookie `HttpOnly`
+que o JavaScript não lê, e é isso que impede um XSS de roubá-la.
+
+### O que falta para funcionar por completo
+
+O caminho de **metas** funciona ponta a ponta hoje: criar conta, entrar, criar,
+listar, editar, mudar status, excluir e ver relatórios — tudo no PostgreSQL.
+
+O que ainda **não** funciona, e por quê:
+
+| Falta | Bloqueio | Efeito hoje |
+| --- | --- | --- |
+| Telas de **tarefas** lerem o backend | não existem endpoints de `Task` | a tela funciona, mas sobre mocks |
+| Telas de **lembretes** lerem o backend | não existem endpoints de `Reminder` | idem |
+| **Contas sobreviverem a um restart** | não existe `PostgresUserRepository` | ao reiniciar a API, é preciso criar a conta de novo |
+| Tela de **perfil** mostrar dados reais | não existem endpoints de `User` | mocks |
+
+As três primeiras linhas têm a mesma causa: **só `Goal` tem endpoints**. Quando
+`Task` e `Reminder` ganharem os deles, ligar as telas é acrescentar um arquivo
+em `src/lib/api/` e trocar o roteamento em `virtualPlannerApi.ts` — a decisão
+está num lugar só justamente por isso.
+
+A conta que some no restart é a mais incômoda no dia a dia: as metas continuam
+no banco, mas o `user_id` de uma conta nova pode não bater com o das metas
+antigas. Resolve com uma migration da coluna de senha (faixa 050–059) e o
+adapter de `User`.
 
 ### Estrutura
 

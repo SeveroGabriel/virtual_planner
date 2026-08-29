@@ -187,6 +187,42 @@ void register_auth_routes(ApiServer& api)
         api.end_session(request, response);
         response.status = 204;
     });
+
+    // Quem sou eu. Sem isto o frontend so descobre que perdeu a sessao ao
+    // receber 401 numa chamada de dominio — e ai ja renderizou uma tela vazia.
+    // O gate de autenticacao ja recusa quem nao tem sessao, entao chegar aqui
+    // significa estar autenticado.
+    api.server().Get("/api/auth/me", [&api, users](const httplib::Request& request,
+                                                    httplib::Response& response) {
+        const auto user_id = api.authenticated_user_id(request);
+
+        if (!user_id.has_value())
+        {
+            throw std::logic_error(
+                "Auth route reached without an authenticated caller.");
+        }
+
+        const auto user = users->find_by_id(*user_id);
+
+        if (!user.has_value())
+        {
+            // A sessao aponta para um usuario que sumiu — acontece hoje quando
+            // o processo reinicia, porque UserRepository so existe em memoria.
+            api.end_session(request, response);
+            response.status = 401;
+            response.set_content(
+                nlohmann::json{{"error", {{"code", "unauthorized"},
+                                           {"message", "Sessao expirada."}}}}.dump(),
+                "application/json");
+            return;
+        }
+
+        response.set_content(
+            nlohmann::json{{"id", user->id()},
+                           {"name", user->name()},
+                           {"email", user->email()}}.dump(),
+            "application/json");
+    });
 }
 
 } // namespace virtual_planner::api::http
