@@ -238,10 +238,163 @@ Com o PostgreSQL de pé (`docker compose up -d postgres`), aplique as migraçõe
 
 O script é idempotente (não reaplica migrações já registradas), roda cada migração em transação e usa as mesmas variáveis de ambiente de `back-end/.env.example` (`POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`). Veja `back-end/migrations/README.md` para detalhes.
 
-## Tutorial: consumindo os dados do banco
+## Tutorial: back-end e front-end juntos
 
-Do zero até ler uma meta gravada no PostgreSQL. Todos os comandos abaixo foram
-executados de verdade — as respostas são as reais, não ilustrativas.
+Do clone até usar o aplicativo no navegador, com os dados no PostgreSQL. Foi
+executado de verdade nesta ordem — as saídas abaixo são as reais.
+
+Há dois caminhos. O primeiro é um comando; o segundo é o do dia a dia, com
+recompilação e hot reload.
+
+### Caminho A — tudo pelo Docker
+
+```bash
+cp .env.example .env    # e troque POSTGRES_PASSWORD
+docker compose up
+```
+
+Sobe banco, migrações, API e front-end na ordem certa. Quando parar de rolar
+log, abra <http://127.0.0.1:8081>, crie a conta na tela de login e use.
+
+Não há nada a configurar: o build do `web` recebe `VITE_API_URL=/api` e o nginx
+faz o proxy para o serviço `api`. **O primeiro build demora alguns minutos**,
+porque a imagem do backend compila o `libpqxx` a partir do código-fonte.
+
+### Caminho B — desenvolvimento, com hot reload
+
+Quatro terminais, ou três se o banco já estiver de pé.
+
+**1. Banco**
+
+```bash
+cp .env.example .env    # e troque POSTGRES_PASSWORD
+docker compose up -d postgres
+```
+
+**2. Migrações**
+
+```bash
+set -a && source .env && set +a
+export POSTGRES_HOST=127.0.0.1
+./scripts/db-migrate.sh
+```
+
+```
+Concluído: 7 migration(ns) aplicada(s), 0 pulada(s).
+```
+
+Rodar de novo é seguro: as já aplicadas aparecem como puladas. É este passo que
+cria a coluna `goals.user_id`, sem a qual nenhuma consulta funciona.
+
+**3. Back-end**
+
+```bash
+cmake -S back-end -B back-end/build-full \
+  -DVIRTUAL_PLANNER_WITH_POSTGRES=ON \
+  -DVIRTUAL_PLANNER_WITH_HTTP=ON
+cmake --build back-end/build-full
+
+VP_USE_POSTGRES=true VP_HTTP_HOST=127.0.0.1 VP_HTTP_PORT=8080 \
+  ./back-end/build-full/virtual_planner
+```
+
+No macOS com Homebrew, o `libpq` é keg-only e o CMake não o encontra sozinho.
+Acrescente ao primeiro comando:
+
+```bash
+-DCMAKE_PREFIX_PATH="$(brew --prefix libpqxx);$(brew --prefix libpq)"
+```
+
+Confirme que a API subiu **e** enxergou o banco:
+
+```bash
+curl -s http://127.0.0.1:8080/api/health
+```
+
+```json
+{"app":"virtual-planner","database":{"configured":true,"connected":true},
+ "profile":"development","status":"ok"}
+```
+
+`"connected": false` significa API de pé e banco fora do alcance — confira
+`POSTGRES_HOST` e se o container está rodando.
+
+**4. Front-end**
+
+```bash
+cd front-end
+npm ci
+npm run dev
+```
+
+Nada a configurar: `.env.development` é versionado com `VITE_API_URL=/api`, e o
+`vite.config.ts` encaminha `/api` para `http://127.0.0.1:8080`.
+
+### Usando
+
+Abra <http://localhost:5173>. Você cai na tela de login, porque nenhuma rota
+renderiza sem sessão.
+
+1. Clique em **Ainda não tenho conta**.
+2. Preencha nome, e-mail e uma senha de **no mínimo 12 caracteres** — menos que
+   isso o servidor recusa.
+3. **Criar conta e entrar** leva ao dashboard.
+4. Em **Metas**, crie uma meta. Ela vai para o PostgreSQL.
+
+A prova de que atravessou tudo:
+
+```bash
+docker compose exec postgres \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -c "SELECT id, user_id, description, status FROM goals ORDER BY id;"
+```
+
+```
+ id | user_id | description |   status
+----+---------+-------------+-------------
+  1 |       1 | Estudar C++ | In Progress
+```
+
+O caminho completo é: navegador → proxy do Vite → API em C++ → `libpqxx` →
+PostgreSQL. A coluna `user_id` mostra o dono; **toda consulta do adapter filtra
+por ela**, então outra conta não enxerga esta linha.
+
+### O que funciona, e o que ainda não
+
+| Tela | Origem dos dados |
+| --- | --- |
+| Login, Metas, Relatórios, Dashboard | **API e PostgreSQL** |
+| Tarefas, Lembretes, Perfil | mocks — não existem endpoints para elas |
+
+Detalhes e o que falta para fechar estão em
+[O que falta para funcionar por completo](#o-que-falta-para-funcionar-por-completo).
+
+### Erros comuns
+
+| Sintoma | Causa |
+| --- | --- |
+| Cai no login e volta ao login | senha com menos de 12 caracteres; a mensagem aparece no formulário |
+| Tela "A API não respondeu" | back-end fora do ar, ou em porta diferente de 8080 — ajuste com `VP_API_TARGET` |
+| Metas vazias após reiniciar a API | a conta sumiu junto: `User` só existe em memória. Crie de novo |
+| `"connected": false` no health | banco fora do alcance; confira `POSTGRES_HOST` e o container |
+| `relation "goals" does not exist` | faltou rodar `./scripts/db-migrate.sh` |
+| `ports are not available: 5432` | já há um PostgreSQL na máquina ocupando a porta |
+| Telas com dados que não estão no banco | `VITE_API_URL` comentada: o front está em modo mock |
+
+Para trabalhar sem back-end nenhum, comente `VITE_API_URL` em
+`front-end/.env.development` — todas as telas voltam aos mocks.
+
+## Tutorial: consumindo os dados do banco pela API
+
+Este é o aprofundamento do anterior, **sem o front-end**: só `curl`, `psql` e o
+repositório em C++. Serve para entender o contrato da API, depurar um endpoint
+ou escrever código de back-end.
+
+Se você quer o aplicativo funcionando, use o
+[tutorial de back-end e front-end juntos](#tutorial-back-end-e-front-end-juntos).
+
+Todos os comandos abaixo foram executados de verdade — as respostas são as
+reais, não ilustrativas.
 
 ### O que persiste, e o que não persiste
 
