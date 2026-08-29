@@ -18,6 +18,7 @@
 #include "virtual_planner/api/http/routes/reminder_routes.hpp"
 #include "virtual_planner/api/http/server_config.hpp"
 #include "virtual_planner/api/http/routes/goal_routes.hpp"
+#include "virtual_planner/api/http/routes/task_routes.hpp"
 #endif
 
 #if defined(VIRTUAL_PLANNER_WITH_POSTGRES)
@@ -25,6 +26,7 @@
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_goal_repository.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_reminder_repository.hpp"
+#include "virtual_planner/infrastructure/postgres/postgres_task_repository.hpp"
 
 #include <optional>
 #endif
@@ -60,8 +62,8 @@ int main() {
             " log_level=" +
             std::string{virtual_planner::interfaces::to_string(logger.minimum())});
 
-    // In-memory e o padrao. Task e User continuam in-memory mesmo com o banco
-    // ligado, porque essas duas entidades ainda nao tem adapter PostgreSQL.
+    // In-memory e o padrao. User continua in-memory mesmo com o banco ligado,
+    // porque essa entidade ainda nao tem adapter PostgreSQL.
     virtual_planner::persistence::InMemoryGoalRepository memory_goals;
     virtual_planner::persistence::InMemoryTaskRepository memory_tasks;
     virtual_planner::persistence::InMemoryReminderRepository memory_reminders;
@@ -81,6 +83,7 @@ int main() {
     std::optional<virtual_planner::infrastructure::postgres::PostgresDatabase> database;
     std::optional<virtual_planner::infrastructure::postgres::PostgresGoalRepository> postgres_goals;
     std::optional<virtual_planner::infrastructure::postgres::PostgresReminderRepository> postgres_reminders;
+    std::optional<virtual_planner::infrastructure::postgres::PostgresTaskRepository> postgres_tasks;
 
     if (postgres_enabled())
     {
@@ -91,9 +94,11 @@ int main() {
 
       postgres_goals.emplace(*database);
       postgres_reminders.emplace(*database);
+      postgres_tasks.emplace(*database);
 
       repositories.goals = &*postgres_goals;
       repositories.reminders = &*postgres_reminders;
+      repositories.tasks = &*postgres_tasks;
       health_database = &*database;
     }
 #else
@@ -116,6 +121,7 @@ int main() {
     virtual_planner::api::http::register_reporting_routes(server);
     virtual_planner::api::http::register_reminder_routes(server);
     virtual_planner::api::http::register_goal_routes(server);
+    virtual_planner::api::http::register_task_routes(server);
 
     const int port = server.bind(server_config);
 

@@ -11,6 +11,9 @@ target_link_libraries(goal_json_test PRIVATE virtual_planner_json)
 virtual_planner_add_test(reminder_json_test unit/api/json/reminder_json_test.cpp)
 target_link_libraries(reminder_json_test PRIVATE virtual_planner_json)
 
+virtual_planner_add_test(task_json_test unit/api/json/task_json_test.cpp)
+target_link_libraries(task_json_test PRIVATE virtual_planner_json)
+
 # O teste do servidor sobe uma porta de verdade, entao so existe com a
 # camada HTTP compilada.
 if(VIRTUAL_PLANNER_WITH_HTTP)
@@ -24,4 +27,9 @@ if(VIRTUAL_PLANNER_WITH_HTTP)
     integration/api/goal_routes_test.cpp
   )
   target_link_libraries(goal_routes_test PRIVATE virtual_planner_http)
+  virtual_planner_add_test(
+    task_routes_test
+    integration/api/task_routes_test.cpp
+  )
+  target_link_libraries(task_routes_test PRIVATE virtual_planner_http)
 endif()

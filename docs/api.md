@@ -541,6 +541,138 @@ Remove uma meta pelo identificador.
 Uma remoção bem-sucedida responde **204** sem corpo. Um identificador
 inexistente responde **404** com `code="not_found"`.
 
+## Task
+
+A representação JSON de `Task` reutiliza as conversões compartilhadas de
+`Category`, `Date`, `TimeSlot`, `Priority` e `TaskStatus` definidas em P-29.0.
+
+Exemplo:
+
+```json
+{
+  "id": 5,
+  "description": "Implementar a estrutura do AppShell",
+  "category": "Work",
+  "date": "2026-08-29",
+  "time_slot": {
+    "start": 480,
+    "end": 540
+  },
+  "shift": "Morning",
+  "priority": "High",
+  "status": "Pending"
+}
+```
+
+| Campo | Tipo JSON | Significado |
+|---|---|---|
+| `id` | inteiro sem sinal | Identificador da tarefa |
+| `description` | string | Descrição da tarefa |
+| `category` | string | `Category`, usando a representação compartilhada |
+| `date` | string | Data da tarefa, em ISO 8601 `YYYY-MM-DD` |
+| `time_slot` | objeto | `TimeSlot`, com `start` e `end` em minutos desde a meia-noite |
+| `shift` | string | `Shift` **derivado** de `time_slot.start`; ver abaixo |
+| `priority` | string | `Priority`, usando a representação compartilhada |
+| `status` | string | `TaskStatus`, usando a representação compartilhada |
+
+### Agendamento: intervalo e turno
+
+`Task` tem **uma** forma de agendamento no domínio — o `time_slot`. O turno
+(`shift`) não é um campo da entidade: ele é **derivado** do início do
+`time_slot`, com os mesmos limites de `reporting::shift_of`:
+
+| `shift` | Faixa de `time_slot.start` |
+|---|---|
+| `"Morning"` | `[00:00, 12:00)` — `start` em `[0, 720)` |
+| `"Afternoon"` | `[12:00, 18:00)` — `start` em `[720, 1080)` |
+| `"Evening"` | `[18:00, 24:00)` — `start` em `[1080, 1440)` |
+
+Regras do formato, para não haver ambiguidade sobre qual campo manda:
+
+- Na **saída** (`to_json`), `shift` está sempre presente e é sempre coerente com
+  `time_slot`. É um rótulo de leitura; o `time_slot` é a fonte de verdade.
+- Na **entrada** (`task_from_json`), `time_slot` é obrigatório. `shift` é
+  opcional: se vier, precisa ser igual ao turno derivado de `time_slot`, senão
+  o payload é rejeitado com **400**. Nunca se usa `shift` para inferir horário.
+
+Um agendamento "por turno" — sem horário exato — depende de `Task` ter turno
+nativo (lacuna A da P-62 / #34, ainda não entregue). Enquanto isso, uma tarefa
+de manhã é simplesmente uma tarefa cujo `time_slot` começa antes das 12:00.
+
+Funções:
+
+```cpp
+nlohmann::json to_json(const domain::Task& task);
+domain::Task task_from_json(const nlohmann::json& value);
+```
+
+### Endpoints de Task
+
+Os endpoints de Task reutilizam a representação JSON acima. Erros de domínio
+seguem o mapeamento único de [Erros](#erros): `400` para validação, `404` para
+não encontrado, `500` genérico.
+
+| Método e rota | Resposta |
+| --- | --- |
+| `GET /api/tasks` | **200** com um array de tarefas (ver filtros abaixo) |
+| `GET /api/tasks/:id` | **200** com a tarefa; **404** se o id não existe |
+| `POST /api/tasks` | **201** com a tarefa criada e header `Location: /api/tasks/:id` |
+| `PATCH /api/tasks/:id` | **200** com a tarefa atualizada; **404** se o id não existe |
+| `PATCH /api/tasks/:id/status` | **200** com a tarefa; **404** se o id não existe |
+| `DELETE /api/tasks/:id` | **204** sem corpo; **404** se o id não existe |
+
+#### `GET /api/tasks`
+
+Lista as tarefas. Todos os filtros são passados por query string, são
+**opcionais** e combinam com **E**: uma tarefa só entra na resposta se atende a
+todos os filtros informados. Sem nenhum filtro, retorna todas.
+
+| Parâmetro | Valor | Efeito |
+| --- | --- | --- |
+| `start_date` | `Date` ISO 8601 `YYYY-MM-DD` | mantém tarefas com `date >= start_date` |
+| `end_date` | `Date` ISO 8601 `YYYY-MM-DD` | mantém tarefas com `date <= end_date` |
+| `category` | `Category` | mantém tarefas dessa categoria |
+| `priority` | `Priority` | mantém tarefas dessa prioridade |
+| `status` | `TaskStatus` | mantém tarefas nesse status |
+
+`start_date` e `end_date` formam um intervalo inclusivo; cada limite pode
+aparecer sozinho. Se os dois vierem e `start_date > end_date`, a resposta é
+**400**. Um valor que não corresponde a nenhum enum, ou uma data inexistente
+(`2026-02-30`), também responde **400** com `code="validation_error"`.
+
+#### `POST /api/tasks`
+
+Cria uma tarefa. Corpo:
+
+```json
+{
+  "description": "Implementar a estrutura do AppShell",
+  "category": "Work",
+  "date": "2026-08-29",
+  "time_slot": { "start": 480, "end": 540 },
+  "priority": "High"
+}
+```
+
+Os cinco campos são obrigatórios. `id` não é aceito (é gerado pelo repositório)
+e `status` também não: toda tarefa nova nasce `"Pending"`. `shift` é derivado e
+não é lido na entrada. Um campo faltando, um valor de enum inválido, um
+`time_slot` que viola as invariantes ou um JSON malformado respondem **400**.
+
+#### `PATCH /api/tasks/:id`
+
+Atualização parcial. Aceita qualquer subconjunto de `description`, `category`,
+`date`, `time_slot` e `priority`; os campos omitidos são preservados. `status`
+**não** é alterado por aqui — use `PATCH /api/tasks/:id/status`. `shift` no
+corpo é ignorado.
+
+#### `PATCH /api/tasks/:id/status`
+
+Corpo `{ "status": "Executed" }`. `status` é obrigatório e aceita qualquer valor
+de `TaskStatus` (`"Pending"`, `"Executed"`, `"PartiallyExecuted"`,
+`"Cancelled"`, `"Postponed"`); não há máquina de estados. Um valor inválido ou
+o campo ausente respondem **400**.
+
 ## Reminder
 
 A representação JSON de `Reminder` reutiliza as conversões compartilhadas de
