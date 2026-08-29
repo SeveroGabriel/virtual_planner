@@ -81,11 +81,68 @@ void test_user_rejects_blank_name_and_email() {
               "Uma atualizacao rejeitada nao deve alterar o email");
 }
 
+void test_user_email_format_rule() {
+    auto throws_invalid_argument = [](auto fn) {
+        try { fn(); return false; }
+        catch (const std::invalid_argument&) { return true; }
+    };
+
+    // Aceita: formato minimo local@dominio.tld.
+    User accepted_simple(1, "Gabriel", "gabriel@example.com");
+    VP_EXPECT(accepted_simple.email() == "gabriel@example.com",
+              "Email no formato local@dominio.tld deve ser aceito");
+
+    // Aceita: subdominio antes do ultimo ponto tambem e valido, a regra
+    // so exige um '.' com texto dos dois lados na parte apos o '@'.
+    User accepted_subdomain(2, "Gabriel", "gabriel@mail.example.com");
+    VP_EXPECT(accepted_subdomain.email() == "gabriel@mail.example.com",
+              "Email com subdominio deve ser aceito");
+
+    // Rejeita: mais de um '@'.
+    VP_EXPECT(throws_invalid_argument(
+                  [](){ User user(1, "Gabriel", "a@b@example.com"); }),
+              "Deve rejeitar email com mais de um '@'");
+
+    // Rejeita: nada antes do '@'.
+    VP_EXPECT(throws_invalid_argument(
+                  [](){ User user(1, "Gabriel", "@example.com"); }),
+              "Deve rejeitar email sem parte local, antes do '@'");
+
+    // Rejeita: nada depois do '@'.
+    VP_EXPECT(throws_invalid_argument(
+                  [](){ User user(1, "Gabriel", "gabriel@"); }),
+              "Deve rejeitar email sem dominio, depois do '@'");
+
+    // Rejeita: dominio sem '.'.
+    VP_EXPECT(throws_invalid_argument(
+                  [](){ User user(1, "Gabriel", "gabriel@example"); }),
+              "Deve rejeitar email com dominio sem '.'");
+
+    // Rejeita: '.' logo apos o '@', sem texto antes dele no dominio.
+    VP_EXPECT(throws_invalid_argument(
+                  [](){ User user(1, "Gabriel", "gabriel@.com"); }),
+              "Deve rejeitar email com dominio comecando em '.'");
+
+    // Rejeita: '.' no fim do dominio, sem texto depois dele.
+    VP_EXPECT(throws_invalid_argument(
+                  [](){ User user(1, "Gabriel", "gabriel@example."); }),
+              "Deve rejeitar email com dominio terminando em '.'");
+
+    // A mesma regra vale para update_email, nao so para o construtor.
+    User valid_user(1, "Gabriel", "gabriel@example.com");
+    VP_EXPECT(throws_invalid_argument(
+                  [&valid_user](){ valid_user.update_email("sem-dominio@"); }),
+              "update_email deve aplicar a mesma regra de formato");
+    VP_EXPECT(valid_user.email() == "gabriel@example.com",
+              "Uma atualizacao de email rejeitada nao deve alterar o email");
+}
+
 int main() {
     test_user_creation_and_getters();
     test_user_updates();
     test_user_validation_rejections();
     test_user_rejects_blank_name_and_email();
+    test_user_email_format_rule();
 
     return 0;
 }
