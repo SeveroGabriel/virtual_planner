@@ -6,9 +6,15 @@
 # banco esta saudavel E as migrations terminaram; o frontend so depois que a
 # API responde /api/health.
 #
-# Nenhuma credencial esta embutida nas imagens. Os valores abaixo vem do
-# .env.example da raiz e sao de desenvolvimento — troque POSTGRES_PASSWORD em
-# qualquer ambiente que nao seja a sua maquina.
+# Nenhuma credencial esta embutida nas imagens.
+#
+# POSTGRES_PASSWORD e obrigatoria e NAO tem valor padrao: sem ela no .env da
+# raiz o compose para com erro, em vez de subir com uma senha publicada neste
+# repositorio.
+#
+# Todas as portas sao publicadas apenas em 127.0.0.1. A API nao tem
+# autenticacao: qualquer pessoa que a alcance le, altera e apaga dados. Nao
+# troque para 0.0.0.0 antes de existir autenticacao.
 
 services:
   postgres:
@@ -16,9 +22,12 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-virtual_planner}
       POSTGRES_USER: ${POSTGRES_USER:-virtual_planner}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env da raiz}
     ports:
-      - "5432:5432"
+      # Só no loopback: 'migrate' e 'api' alcançam o banco pela rede interna do
+      # compose, pelo nome do serviço. Publicar em 0.0.0.0 expunha o PostgreSQL
+      # à rede inteira sem necessidade nenhuma.
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -44,7 +53,7 @@ services:
       POSTGRES_PORT: "5432"
       POSTGRES_DB: ${POSTGRES_DB:-virtual_planner}
       POSTGRES_USER: ${POSTGRES_USER:-virtual_planner}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env da raiz}
       POSTGRES_SSLMODE: disable
     volumes:
       - ./scripts:/repo/scripts:ro
@@ -75,10 +84,13 @@ services:
       POSTGRES_PORT: "5432"
       POSTGRES_DB: ${POSTGRES_DB:-virtual_planner}
       POSTGRES_USER: ${POSTGRES_USER:-virtual_planner}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env da raiz}
       POSTGRES_SSLMODE: disable
     ports:
-      - "8080:8080"
+      # A API nao tem autenticacao. Enquanto nao tiver, publicar fora do
+      # loopback entrega CRUD e relatorios a qualquer host que alcance esta
+      # maquina.
+      - "127.0.0.1:8080:8080"
     healthcheck:
       # /api/health responde 200 mesmo com o banco fora do ar, por isso o
       # healthcheck confere o campo status, e nao so o codigo HTTP.
@@ -98,7 +110,7 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "8081:80"
+      - "127.0.0.1:8081:80"
 
 volumes:
   postgres_data:

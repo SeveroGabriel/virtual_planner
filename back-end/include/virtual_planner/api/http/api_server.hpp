@@ -20,6 +20,9 @@
 
 #include <httplib.h>
 
+#include <cstddef>
+#include <ctime>
+
 #include "virtual_planner/api/http/server_config.hpp"
 #include "virtual_planner/core/app_config.hpp"
 #include "virtual_planner/interfaces/logger.hpp"
@@ -67,6 +70,14 @@ public:
     void stop();
 
 private:
+    // Teto do corpo de requisicao e dos timeouts de socket. Ficam aqui, e nao
+    // soltos no .cpp, para que um teste consiga afirmar sobre os mesmos valores
+    // que o servidor aplica.
+    static constexpr std::size_t kMaxPayloadBytes = 1024U * 1024U;
+    static constexpr time_t kSocketTimeoutSeconds = 10;
+    static constexpr time_t kIdleIntervalMicroseconds = 100000;
+
+    void register_limits();
     void register_health_route();
 
     // Aplicado a todas as rotas de uma vez: um dono de modulo nao escreve

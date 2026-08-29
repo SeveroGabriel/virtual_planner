@@ -103,7 +103,7 @@ VP_HTTP_HOST=127.0.0.1 VP_HTTP_PORT=8080 ./back-end/build-http/virtual_planner
 curl -s http://127.0.0.1:8080/api/health
 ```
 
-`VP_HTTP_HOST` e `VP_HTTP_PORT` são opcionais e caem em `0.0.0.0:8080`. A API sobe e responde mesmo sem PostgreSQL.
+`VP_HTTP_HOST` e `VP_HTTP_PORT` são opcionais e caem em `0.0.0.0:8080` — dentro de container é o que permite ao Docker publicar a porta; fora dele, prefira `127.0.0.1`. A API sobe e responde mesmo sem PostgreSQL.
 
 Endpoints disponíveis hoje:
 
@@ -122,6 +122,13 @@ Endpoints disponíveis hoje:
 Erro de domínio vira status HTTP num mapeamento único: `400` para validação, `404` para não encontrado, `409` para conflito e `500` genérico, sem vazar a mensagem interna. O contrato completo, com CORS e log, está em [docs/api.md](docs/api.md).
 
 Os endpoints de Task, Reminder e User ainda não existem.
+
+> **A API não tem autenticação.** Qualquer pessoa que alcance a porta lê, altera e
+> apaga dados, e lê todos os relatórios. É uma decisão registrada na ADR-002, que
+> descreve o sistema como single-tenant de uso local — e vale enquanto o servidor
+> ficar no `localhost`. Por isso `VP_HTTP_HOST` deve continuar em `127.0.0.1` fora
+> de container, e o `docker-compose.yml` publica todas as portas apenas no
+> loopback. Não mude para `0.0.0.0` antes de existir autenticação.
 
 ## Configuração do PostgreSQL
 
@@ -154,9 +161,12 @@ Tudo com o prefixo `VITE_` é embutido no bundle e fica visível no navegador. N
 
 ### Stack completa
 
-De um clone limpo, um comando sobe banco, migrações, API e frontend:
+`POSTGRES_PASSWORD` é obrigatória e não tem valor padrão: sem ela o compose para
+com erro em vez de subir com uma senha publicada neste repositório. De um clone
+limpo:
 
 ```bash
+cp .env.example .env    # e troque POSTGRES_PASSWORD
 docker compose up
 ```
 
@@ -170,8 +180,8 @@ docker compose up
 Depois de subir:
 
 ```bash
-curl -s http://localhost:8080/api/health   # {"status":"ok", ...}
-open http://localhost:8081                 # frontend
+curl -s http://127.0.0.1:8080/api/health   # {"status":"ok", ...}
+open http://127.0.0.1:8081                 # frontend
 ```
 
 A ordem é garantida por `depends_on` com condição: a API só sobe depois que o banco está saudável **e** as migrações terminaram, e o frontend só depois que a API responde `/api/health`. O `migrate` é idempotente, então repetir `docker compose up` não reaplica nada.
@@ -199,9 +209,17 @@ docker compose down
 
 Use `docker compose down -v` somente para apagar também os dados locais.
 
+Todas as portas são publicadas em `127.0.0.1`, e não em `0.0.0.0`: nem o banco nem
+a API ficam alcançáveis de outra máquina. Os serviços conversam entre si pela rede
+interna do compose, pelo nome do serviço, então nada disso depende da publicação.
+
 ### Credenciais
 
-Nenhuma credencial vai para dentro das imagens. Tudo entra por variável de ambiente do compose, com valores de desenvolvimento vindos do `.env.example` da raiz. Troque `POSTGRES_PASSWORD` em qualquer ambiente que não seja a sua máquina.
+Nenhuma credencial vai para dentro das imagens. Tudo entra por variável de ambiente do compose.
+
+`POSTGRES_PASSWORD` não tem valor padrão em lugar nenhum — nem no compose, nem no `.env.example`, nem no `scripts/db-migrate.sh`. O placeholder do `.env.example` é `DEFINA-UMA-SENHA`, escolhido justamente por **não** funcionar: um placeholder que conecta é pior que nenhum, porque quem esquece de trocá-lo não descobre.
+
+Com `VP_PROFILE=production` a aplicação recusa subir se a senha for um valor conhecido (`change-me`, `postgres`, `password`...) ou se `POSTGRES_SSLMODE` for `disable`.
 
 ## Migrações Do Banco De Dados
 

@@ -19,10 +19,25 @@ ApiServer::ApiServer(const core::AppConfig& config,
       logger_(logger),
       server_config_(std::move(server_config))
 {
+    register_limits();
     register_exception_handler();
     register_cors();
     register_request_log();
     register_health_route();
+}
+
+void ApiServer::register_limits()
+{
+    // Sem limite explicito o httplib aceita corpo de qualquer tamanho, e uma
+    // unica requisicao consegue esgotar a memoria do processo. 1 MiB e folgado
+    // para os payloads desta API, que sao objetos de dominio pequenos.
+    server_.set_payload_max_length(kMaxPayloadBytes);
+
+    // Sem timeout, uma conexao que abre e nao fala prende uma thread do pool
+    // ate o fim dos tempos. Poucas conexoes assim derrubam o servidor.
+    server_.set_read_timeout(kSocketTimeoutSeconds, 0);
+    server_.set_write_timeout(kSocketTimeoutSeconds, 0);
+    server_.set_idle_interval(0, kIdleIntervalMicroseconds);
 }
 
 httplib::Server& ApiServer::server() noexcept

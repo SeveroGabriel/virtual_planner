@@ -82,6 +82,54 @@ int main()
 
     // Assert
     VP_EXPECT(invalid_port_rejected, "invalid port should be rejected");
+
+    // Um mesmo conjunto de valores, mudando so o perfil: e o perfil que decide.
+    const auto build = [](ExecutionProfile profile,
+                          const std::string &password,
+                          const std::string &sslmode)
+    {
+      AppConfig config("planner", profile);
+      config.set("postgres.host", "localhost");
+      config.set("postgres.port", "5432");
+      config.set("postgres.database", "virtual_planner");
+      config.set("postgres.user", "planner");
+      config.set("postgres.password", password);
+      config.set("postgres.sslmode", sslmode);
+      return PostgresConfig::from_app_config(config);
+    };
+
+    const auto rejects = [](const PostgresConfig &config)
+    {
+      try
+      {
+        config.validate();
+        return false;
+      }
+      catch (const virtual_planner::shared::ConfigError &)
+      {
+        return true;
+      }
+    };
+
+    // Arrange / Act / Assert: senha publicada no repositorio, em producao.
+    VP_EXPECT(rejects(build(ExecutionProfile::Production, "change-me", "require")),
+              "production should refuse the password published in the repository");
+    VP_EXPECT(rejects(build(ExecutionProfile::Production, "postgres", "require")),
+              "production should refuse the historical PostgreSQL default password");
+
+    // Em desenvolvimento a mesma senha passa: e o que faz o compose local subir.
+    VP_EXPECT(!rejects(build(ExecutionProfile::Development, "change-me", "disable")),
+              "development should still accept the local development password");
+    VP_EXPECT(!rejects(build(ExecutionProfile::Test, "change-me", "disable")),
+              "test should still accept the local development password");
+
+    // Arrange / Act / Assert: trafego em texto claro, em producao.
+    VP_EXPECT(rejects(build(ExecutionProfile::Production, "uma-senha-real", "disable")),
+              "production should refuse sslmode=disable");
+
+    // Senha real e TLS ligado: e a unica combinacao que producao aceita.
+    VP_EXPECT(!rejects(build(ExecutionProfile::Production, "uma-senha-real", "require")),
+              "production should accept a real password over TLS");
   }
   catch (const std::exception &error)
   {

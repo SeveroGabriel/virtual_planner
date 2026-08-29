@@ -12,7 +12,7 @@
 #   POSTGRES_PORT     (default: 5432)
 #   POSTGRES_DB       (default: virtual_planner)
 #   POSTGRES_USER     (default: virtual_planner)
-#   POSTGRES_PASSWORD (default: change-me)
+#   POSTGRES_PASSWORD (OBRIGATÓRIA, sem default: o script aborta sem ela)
 #   POSTGRES_SSLMODE  (default: disable)
 #   MIGRATIONS_DIR    (default: back-end/migrations relativo a este script)
 #
@@ -43,9 +43,17 @@ POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
 POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 POSTGRES_DB="${POSTGRES_DB:-virtual_planner}"
 POSTGRES_USER="${POSTGRES_USER:-virtual_planner}"
-POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-change-me}"
 POSTGRES_SSLMODE="${POSTGRES_SSLMODE:-disable}"
 MIGRATIONS_DIR="${MIGRATIONS_DIR:-${REPO_ROOT}/back-end/migrations}"
+
+# Sem default de propósito. Um placeholder que funciona é pior que nenhum:
+# ele conecta, o script segue, e a senha publicada neste repositório vira a
+# credencial real do banco sem ninguém notar.
+if [ -z "${POSTGRES_PASSWORD:-}" ]; then
+  echo "ERRO: POSTGRES_PASSWORD não definida." >&2
+  echo "      Defina-a no ambiente ou copie .env.example para .env e ajuste." >&2
+  exit 1
+fi
 
 if ! command -v psql >/dev/null 2>&1; then
   echo "ERRO: psql não encontrado no PATH. Instale o cliente PostgreSQL (ex.: postgresql-client / libpq)." >&2

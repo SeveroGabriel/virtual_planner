@@ -13,6 +13,11 @@ namespace virtual_planner::infrastructure::postgres {
 namespace
 {
 
+// Mesma constante do PostgresReminderRepository. Enquanto a ADR-002 mantiver o
+// sistema single-tenant, este e o dono de tudo; quando houver autenticacao, o
+// valor passa a vir da requisicao e so este ponto muda.
+constexpr std::uint64_t kSingleTenantUserId{1};
+
 std::string date_to_postgres(const domain::Date& date)
 {
     std::ostringstream stream;
@@ -51,17 +56,19 @@ std::uint64_t PostgresGoalRepository::save(
         R"(
             INSERT INTO goals
             (
+                user_id,
                 description,
                 category,
                 status,
                 period,
                 reference_date
             )
-            VALUES ($1,$2,$3,$4,$5)
+            VALUES ($1,$2,$3,$4,$5,$6)
             RETURNING id
         )",
         pqxx::params{
             transaction,
+            kSingleTenantUserId,
             goal.description(),
             to_string(goal.category()),
             to_string(goal.status()),
@@ -92,7 +99,7 @@ void PostgresGoalRepository::update(
                 period=$4,
                 reference_date=$5,
                 updated_at=CURRENT_TIMESTAMP
-            WHERE id=$6
+            WHERE id=$6 AND user_id=$7
         )",
         pqxx::params{
             transaction,
@@ -101,7 +108,8 @@ void PostgresGoalRepository::update(
             to_string(goal.status()),
             to_string(goal.period()),
             date_to_postgres(goal.reference_date()),
-            goal.id()
+            goal.id(),
+            kSingleTenantUserId
         }).no_rows();
 
     transaction.commit();
@@ -128,9 +136,9 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
                 EXTRACT(YEAR FROM reference_date)::INTEGER
                     AS reference_date_year
             FROM goals
-            WHERE id = $1
+            WHERE id = $1 AND user_id = $2
         )",
-        pqxx::params{transaction, id}
+        pqxx::params{transaction, id, kSingleTenantUserId}
     );
 
     if (result.empty())
@@ -174,8 +182,10 @@ PostgresGoalRepository::find_all()
                 EXTRACT(YEAR FROM reference_date)::INTEGER
                     AS reference_date_year
             FROM goals
+            WHERE user_id = $1
             ORDER BY id
-        )"
+        )",
+        pqxx::params{transaction, kSingleTenantUserId}
     );
 
     std::vector<domain::Goal> goals;
@@ -223,12 +233,14 @@ PostgresGoalRepository::find_by_date_range(
                 EXTRACT(YEAR FROM reference_date)::INTEGER
                     AS reference_date_year
             FROM goals
-            WHERE reference_date >= $1
-              AND reference_date <= $2
+            WHERE user_id = $1
+              AND reference_date >= $2
+              AND reference_date <= $3
             ORDER BY reference_date, id
         )",
         pqxx::params{
             transaction,
+            kSingleTenantUserId,
             date_to_postgres(start),
             date_to_postgres(end)
         }
@@ -262,8 +274,8 @@ void PostgresGoalRepository::remove(
     pqxx::work transaction(database_.connection());
 
     transaction.exec(
-        "DELETE FROM goals WHERE id=$1",
-        pqxx::params{transaction, id}).no_rows();
+        "DELETE FROM goals WHERE id=$1 AND user_id=$2",
+        pqxx::params{transaction, id, kSingleTenantUserId}).no_rows();
 
     transaction.commit();
 }

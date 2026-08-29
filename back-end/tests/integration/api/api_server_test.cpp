@@ -562,5 +562,49 @@ int main()
     VP_EXPECT(!throws_config_error("0"),
               "VP_HTTP_PORT 0 is valid and means an ephemeral port");
 
+    // --- Limite de corpo: uma requisicao nao derruba o processo -------------
+    {
+        http_api::ApiServer server{config, repositories, nullptr, logger};
+
+        // Rota que so existe neste teste: ela nao pode nem ser alcancada, o
+        // corpo tem de ser recusado antes de chegar ao handler.
+        bool handler_reached = false;
+        server.server().Post(
+            "/test/echo",
+            [&handler_reached](const httplib::Request&,
+                               httplib::Response& response) {
+                handler_reached = true;
+                response.status = 200;
+            });
+
+        with_running_server(server, [&handler_reached](httplib::Client& client) {
+            // Abaixo do teto de 1 MiB: passa e chega no handler.
+            const std::string small(64 * 1024, 'x');
+            const auto accepted =
+                client.Post("/test/echo", small, "application/octet-stream");
+
+            VP_EXPECT(static_cast<bool>(accepted),
+                      "a request below the payload limit should answer");
+            VP_EXPECT(accepted->status == 200,
+                      "a request below the payload limit should be served");
+            VP_EXPECT(handler_reached,
+                      "a request below the payload limit should reach the handler");
+
+            handler_reached = false;
+
+            // Acima do teto: o servidor recusa antes de alocar o corpo inteiro.
+            const std::string huge(2 * 1024 * 1024, 'x');
+            const auto refused =
+                client.Post("/test/echo", huge, "application/octet-stream");
+
+            VP_EXPECT(static_cast<bool>(refused),
+                      "a request above the payload limit should still answer");
+            VP_EXPECT(refused->status == 413,
+                      "a request above the payload limit should answer 413");
+            VP_EXPECT(!handler_reached,
+                      "a request above the payload limit must not reach the handler");
+        });
+    }
+
     return 0;
 }

@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace virtual_planner::infrastructure::postgres
@@ -68,6 +69,32 @@ namespace virtual_planner::infrastructure::postgres
       }
     }
 
+    // Valores que aparecem publicados no repositorio (docker-compose.yml,
+    // .env.example, scripts/db-migrate.sh) ou que sao default historico do
+    // proprio PostgreSQL. Sao credenciais conhecidas por quem le o codigo: em
+    // producao, aceitar qualquer uma delas equivale a nao ter senha.
+    bool is_well_known_password(const std::string &value)
+    {
+      static constexpr std::string_view kWellKnown[] = {
+          "change-me",
+          "postgres",
+          "password",
+          "senha",
+          "admin",
+          "DEFINA-UMA-SENHA",
+      };
+
+      for (const auto candidate : kWellKnown)
+      {
+        if (value == candidate)
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     std::string quote_value(const std::string &value)
     {
       std::string quoted;
@@ -94,11 +121,12 @@ namespace virtual_planner::infrastructure::postgres
                                  std::string password,
                                  std::string sslmode,
                                  std::uint16_t connect_timeout,
-                                 std::string application_name)
+                                 std::string application_name,
+                                 core::ExecutionProfile profile)
       : host_(std::move(host)), port_(port), database_(std::move(database)),
         user_(std::move(user)), password_(std::move(password)),
         sslmode_(std::move(sslmode)), connect_timeout_(connect_timeout),
-        application_name_(std::move(application_name))
+        application_name_(std::move(application_name)), profile_(profile)
   {
   }
 
@@ -116,12 +144,20 @@ namespace virtual_planner::infrastructure::postgres
         read_required(config, "postgres.password"),
         config.get_or("postgres.sslmode", "disable"),
         connect_timeout,
-        config.get_or("postgres.application_name", "virtual-planner"));
+        config.get_or("postgres.application_name", "virtual-planner"),
+        config.profile());
   }
 
   PostgresConfig PostgresConfig::from_environment()
   {
-    core::AppConfig config;
+    // Sem isto o perfil se perdia aqui: a AppConfig default e Development, e a
+    // validacao de producao nunca disparava para quem sobe pelo ambiente — que
+    // e justamente o caminho do container.
+    core::AppConfig config(
+        read_environment_or("VP_APP_NAME", "virtual-planner"),
+        core::parse_execution_profile(
+            read_environment_or("VP_PROFILE", "development")));
+
     config.set("postgres.host", read_environment_or("POSTGRES_HOST", "localhost"));
     config.set("postgres.port", read_environment_or("POSTGRES_PORT", "5432"));
     config.set("postgres.database", read_environment_or("POSTGRES_DB", ""));
@@ -157,6 +193,8 @@ namespace virtual_planner::infrastructure::postgres
     return application_name_;
   }
 
+  core::ExecutionProfile PostgresConfig::profile() const noexcept { return profile_; }
+
   void PostgresConfig::validate() const
   {
     require_not_empty(host_, "host");
@@ -172,6 +210,28 @@ namespace virtual_planner::infrastructure::postgres
     if (connect_timeout_ == 0)
     {
       throw shared::ConfigError("invalid PostgreSQL connect_timeout: 0");
+    }
+
+    // Exigencias que so valem em producao. Em development e test, uma senha
+    // fraca e o sslmode desligado sao convenientes e nao protegem nada de real;
+    // em producao, aceitar qualquer um dos dois torna inutil todo o resto.
+    if (profile_ != core::ExecutionProfile::Production)
+    {
+      return;
+    }
+
+    if (is_well_known_password(password_))
+    {
+      throw shared::ConfigError(
+          "refusing to start with a well-known PostgreSQL password in the "
+          "production profile: set POSTGRES_PASSWORD to a real secret");
+    }
+
+    if (sslmode_ == "disable")
+    {
+      throw shared::ConfigError(
+          "refusing to start with POSTGRES_SSLMODE=disable in the production "
+          "profile: use require, verify-ca or verify-full");
     }
   }
 

@@ -166,7 +166,7 @@ jobs:
         env:
           POSTGRES_DB: virtual_planner
           POSTGRES_USER: virtual_planner
-          POSTGRES_PASSWORD: change-me
+          POSTGRES_PASSWORD: ci-ephemeral-only
         ports:
           - 5432:5432
         options: >-
@@ -175,14 +175,17 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      # Credenciais de teste do service container efêmero do CI, mesmos
-      # valores padrão já usados em docker-compose.yml e back-end/.env.example.
-      # Não é segredo real: o banco existe só durante o job e é descartado.
+      # Credenciais do service container efêmero do CI. Não é segredo real: o
+      # banco existe só durante o job e é descartado.
+      #
+      # O valor é deliberadamente distinto de qualquer default do repositório,
+      # para que um `grep change-me` acuse configuração insegura de verdade e
+      # não este job.
       POSTGRES_HOST: localhost
       POSTGRES_PORT: "5432"
       POSTGRES_DB: virtual_planner
       POSTGRES_USER: virtual_planner
-      POSTGRES_PASSWORD: change-me
+      POSTGRES_PASSWORD: ci-ephemeral-only
       VP_USE_POSTGRES: "true"
       # Mesma versão de libpqxx usada no desenvolvimento local.
       LIBPQXX_VERSION: "8.0.2"

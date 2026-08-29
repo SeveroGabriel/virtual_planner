@@ -18,7 +18,8 @@ namespace virtual_planner::infrastructure::postgres
                    std::string password,
                    std::string sslmode,
                    std::uint16_t connect_timeout,
-                   std::string application_name);
+                   std::string application_name,
+                   core::ExecutionProfile profile = core::ExecutionProfile::Development);
 
     [[nodiscard]] static PostgresConfig from_app_config(const core::AppConfig &config);
     [[nodiscard]] static PostgresConfig from_environment();
@@ -31,6 +32,7 @@ namespace virtual_planner::infrastructure::postgres
     [[nodiscard]] const std::string &sslmode() const noexcept;
     [[nodiscard]] std::uint16_t connect_timeout() const noexcept;
     [[nodiscard]] const std::string &application_name() const noexcept;
+    [[nodiscard]] core::ExecutionProfile profile() const noexcept;
 
     void validate() const;
     [[nodiscard]] std::string connection_string() const;
@@ -45,6 +47,7 @@ namespace virtual_planner::infrastructure::postgres
     std::string sslmode_;
     std::uint16_t connect_timeout_;
     std::string application_name_;
+    core::ExecutionProfile profile_;
   };
 
 }
