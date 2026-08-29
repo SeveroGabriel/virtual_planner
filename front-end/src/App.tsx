@@ -18,6 +18,7 @@ import { ReminderFormPage } from "./pages/ReminderFormPage";
 import { PlannerPage } from "./pages/PlannerPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { ReportsPage } from "./pages/ReportsPage";
 
 type ThemeMode = "light" | "dark" | "system";
 
@@ -75,6 +76,8 @@ function MainLayout() {
         <Route path="/reminders" element={<RemindersPage />} />
         <Route path="/reminders/new" element={<ReminderFormPage />} />
         <Route path="/reminders/:id/edit" element={<ReminderFormPage />} />
+
+        <Route path="/reports" element={<ReportsPage />} />
 
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />

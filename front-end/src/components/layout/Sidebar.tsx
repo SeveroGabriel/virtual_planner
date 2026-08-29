@@ -11,6 +11,7 @@ export const Sidebar: FC<SidebarProps> = ({ currentTab, setCurrentTab }) => {
     { id: "tasks", label: "Tarefas", icon: "✅" },
     { id: "goals", label: "Metas", icon: "🎯" },
     { id: "reminders", label: "Lembretes", icon: "🔔" },
+    { id: "reports", label: "Relatórios", icon: "📈" },
   ];
 
   return (
