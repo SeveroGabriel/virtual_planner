@@ -3,6 +3,7 @@
 # Goal
 virtual_planner_add_sources(
   application/goal/create_goal_use_case.cpp
+  application/goal/get_goal_use_case.cpp
   application/goal/update_goal_use_case.cpp
   application/goal/delete_goal_use_case.cpp
   application/goal/list_goals_use_case.cpp

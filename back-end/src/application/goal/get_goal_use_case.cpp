@@ -1,17 +1,17 @@
-#include "virtual_planner/application/goal/delete_goal_use_case.hpp"
-#include "virtual_planner/shared/errors.hpp"
+#include "virtual_planner/application/goal/get_goal_use_case.hpp"
 
-#include <stdexcept>
+#include "virtual_planner/shared/errors.hpp"
 
 namespace virtual_planner::application {
 
-DeleteGoalUseCase::DeleteGoalUseCase(
+GetGoalUseCase::GetGoalUseCase(
     persistence::GoalRepository& repository)
     : repository_(repository)
 {
 }
 
-void DeleteGoalUseCase::execute(std::uint64_t id)
+domain::Goal
+GetGoalUseCase::execute(std::uint64_t id) const
 {
     auto goal = repository_.find_by_id(id);
 
@@ -21,7 +21,7 @@ void DeleteGoalUseCase::execute(std::uint64_t id)
             "Goal not found.");
     }
 
-    repository_.remove(id);
+    return *goal;
 }
 
-}
+} // namespace virtual_planner::application

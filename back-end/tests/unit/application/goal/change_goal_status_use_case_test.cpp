@@ -1,6 +1,7 @@
 #include "virtual_planner/application/goal/change_goal_status_use_case.hpp"
 #include "support/expect.hpp"
 #include "virtual_planner/persistence/memory/in_memory_goal_repository.hpp"
+#include "virtual_planner/shared/errors.hpp"
 
 using namespace virtual_planner;
 
@@ -33,6 +34,26 @@ int main()
     VP_EXPECT(goal->status() ==
                   domain::GoalStatus::Completed,
               "goal status should be updated to Completed");
+
+    bool not_found_thrown = false;
+
+    try
+    {
+        application::ChangeGoalStatusRequest missing_request{
+            999,
+            domain::GoalStatus::Completed
+        };
+
+        use_case.execute(missing_request);
+    }
+    catch (const shared::NotFoundError&)
+    {
+        not_found_thrown = true;
+    }
+
+    VP_EXPECT(
+        not_found_thrown,
+        "changing status of a missing goal should throw NotFoundError");
 
     return 0;
 }

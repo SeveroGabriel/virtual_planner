@@ -4,6 +4,10 @@ virtual_planner_add_test(
   unit/application/goal/create_goal_use_case_test.cpp
 )
 virtual_planner_add_test(
+  get_goal_use_case_test
+  unit/application/goal/get_goal_use_case_test.cpp
+)
+virtual_planner_add_test(
   update_goal_use_case_test
   unit/application/goal/update_goal_use_case_test.cpp
 )

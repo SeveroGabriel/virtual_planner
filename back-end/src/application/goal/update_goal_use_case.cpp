@@ -1,4 +1,5 @@
 #include "virtual_planner/application/goal/update_goal_use_case.hpp"
+#include "virtual_planner/shared/errors.hpp"
 
 #include <stdexcept>
 
@@ -17,7 +18,7 @@ void UpdateGoalUseCase::execute(
 
     if (!goal.has_value())
     {
-        throw std::runtime_error(
+        throw shared::NotFoundError(
             "Goal not found.");
     }
 

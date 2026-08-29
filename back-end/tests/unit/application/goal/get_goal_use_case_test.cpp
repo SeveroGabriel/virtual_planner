@@ -1,4 +1,4 @@
-#include "virtual_planner/application/goal/delete_goal_use_case.hpp"
+#include "virtual_planner/application/goal/get_goal_use_case.hpp"
 
 #include "support/expect.hpp"
 #include "virtual_planner/persistence/memory/in_memory_goal_repository.hpp"
@@ -19,17 +19,24 @@ int main()
             domain::GoalPeriod::Weekly,
             domain::Date(10, 8, 2026)));
 
-    application::DeleteGoalUseCase remove(repository);
+    application::GetGoalUseCase use_case(repository);
 
-    remove.execute(1);
+    const auto goal = use_case.execute(1);
 
-    VP_EXPECT(repository.find_all().empty(), "repository should be empty after deleting the only goal");
+    VP_EXPECT(
+        goal.id() == 1,
+        "should return the requested goal");
+
+    VP_EXPECT(
+        goal.description() == "Study C++",
+        "should return the requested goal data");
 
     bool not_found_thrown = false;
 
     try
     {
-        remove.execute(999);
+        const auto missing_goal = use_case.execute(999);
+        static_cast<void>(missing_goal);
     }
     catch (const shared::NotFoundError&)
     {
@@ -38,7 +45,7 @@ int main()
 
     VP_EXPECT(
         not_found_thrown,
-        "deleting a missing goal should throw NotFoundError");
+        "getting a missing goal should throw NotFoundError");
 
     return 0;
 }

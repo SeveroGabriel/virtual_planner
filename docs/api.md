@@ -355,6 +355,122 @@ A serialização e a desserialização de `category`, `status`, `period` e
 `reference_date` reutilizam as funções de `shared_json`; `Goal` não redefine
 a representação desses tipos.
 
+### Endpoints de Goal
+
+Os endpoints de Goal reutilizam a representação JSON descrita acima. Erros de
+validação seguem o mapeamento global da API: entrada inválida responde `400`
+com `code="validation_error"` e um identificador inexistente responde `404`
+com `code="not_found"`.
+
+#### `GET /api/goals`
+
+Lista as metas contidas no período civil indicado pelos parâmetros `period` e
+`date`.
+
+`period` aceita `weekly`, `monthly` ou `yearly`. `date` usa o formato ISO 8601
+`YYYY-MM-DD` e funciona como data de referência para determinar o intervalo.
+
+Exemplo:
+
+```http
+GET /api/goals?period=weekly&date=2026-08-05
+```
+
+Resposta **200**:
+
+```json
+[
+  {
+    "id": 1,
+    "description": "Study C++",
+    "category": "Study",
+    "status": "In Progress",
+    "period": "Weekly",
+    "reference_date": "2026-08-05"
+  }
+]
+```
+
+Parâmetros ausentes, período diferente de `weekly`, `monthly` ou `yearly`, ou
+uma data inválida respondem **400** com `code="validation_error"`.
+
+#### `GET /api/goals/:id`
+
+Retorna uma meta pelo identificador.
+
+```http
+GET /api/goals/1
+```
+
+Responde **200** com a representação JSON de `Goal`. Um identificador que não
+existe responde **404** com `code="not_found"`.
+
+#### `POST /api/goals`
+
+Cria uma nova meta.
+
+O cliente informa `description`, `category`, `period` e `reference_date`.
+`id` é atribuído pelo repositório e `status` é definido inicialmente pelo caso
+de uso de criação.
+
+```json
+{
+  "description": "Read C++ book",
+  "category": "Study",
+  "period": "Weekly",
+  "reference_date": "2026-08-15"
+}
+```
+
+Responde **201** com a representação da meta criada e o cabeçalho `Location`
+apontando para `/api/goals/:id`.
+
+Campos obrigatórios ausentes, tipos incorretos, valores inválidos ou JSON
+malformado respondem **400** com `code="validation_error"`.
+
+#### `PATCH /api/goals/:id`
+
+Atualiza parcialmente os dados de uma meta. Os campos que não aparecem no
+payload preservam seus valores atuais.
+
+Os campos aceitos são `description`, `category`, `period` e `reference_date`.
+O status possui endpoint próprio.
+
+Exemplo:
+
+```json
+{
+  "description": "Study modern C++"
+}
+```
+
+Responde **200** com a representação atualizada da meta. Payload inválido
+responde **400** com `code="validation_error"` e um identificador inexistente
+responde **404** com `code="not_found"`.
+
+#### `PATCH /api/goals/:id/status`
+
+Altera somente o status de uma meta.
+
+Exemplo:
+
+```json
+{
+  "status": "Completed"
+}
+```
+
+Responde **200** com a representação atualizada da meta. Um status inválido ou
+a ausência do campo `status` responde **400** com `code="validation_error"`.
+Um identificador inexistente responde **404** com `code="not_found"`.
+
+#### `DELETE /api/goals/:id`
+
+Remove uma meta pelo identificador.
+
+Uma remoção bem-sucedida responde **204** sem corpo. Um identificador
+inexistente responde **404** com `code="not_found"`.
+
 ## Exemplo de uso em uma entidade
 
 Este é o padrão que P-29.1 a P-29.4 devem seguir:
