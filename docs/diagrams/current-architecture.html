@@ -527,12 +527,12 @@
         <div class="pulse-dot"></div>
         <h1>Virtual Planner - Arquitetura Atual</h1>
       </div>
-      <p class="subtitle">Monorepo com API HTTP, dominio completo e adapters PostgreSQL de Goal e Reminder</p>
+      <p class="subtitle">Monorepo com API HTTP servindo Goal e relatorios, dominio completo e adapters PostgreSQL de Goal e Reminder</p>
     </div>
 
     <!-- Main Diagram -->
     <div class="diagram-container">
-      <svg viewBox="0 0 1120 720" role="img" aria-label="Virtual Planner - Arquitetura Atual — Monorepo com API HTTP, dominio completo e adapters PostgreSQL de Goal e Reminder (architecture diagram)">
+      <svg viewBox="0 0 1120 720" role="img" aria-label="Virtual Planner - Arquitetura Atual — Monorepo com API HTTP servindo Goal e relatorios, dominio completo e adapters PostgreSQL de Goal e Reminder (architecture diagram)">
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -580,12 +580,12 @@
         <rect x="40" y="80" width="150" height="60" rx="6" class="c-mask"/>
         <rect x="40" y="80" width="150" height="60" rx="6" class="c-frontend" stroke-width="1.5"/>
         <text x="115" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">front-end</text>
-        <text x="115" y="124" class="t-muted" font-size="9" text-anchor="middle">React + Vite</text>
+        <text x="115" y="124" class="t-muted" font-size="9" text-anchor="middle">React + Vite (mocks)</text>
 
         <rect x="240" y="80" width="170" height="60" rx="6" class="c-mask"/>
         <rect x="240" y="80" width="170" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
         <text x="325" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">api</text>
-        <text x="325" y="124" class="t-muted" font-size="9" text-anchor="middle">http + json</text>
+        <text x="325" y="124" class="t-muted" font-size="9" text-anchor="middle">http/routes + json</text>
 
         <rect x="40" y="300" width="130" height="60" rx="6" class="c-mask"/>
         <rect x="40" y="300" width="130" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
@@ -615,7 +615,7 @@
         <rect x="670" y="210" width="160" height="60" rx="6" class="c-mask"/>
         <rect x="670" y="210" width="160" height="60" rx="6" class="c-backend" stroke-width="1.5"/>
         <text x="750" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">application</text>
-        <text x="750" y="254" class="t-muted" font-size="9" text-anchor="middle">casos de uso Goal/Reminder</text>
+        <text x="750" y="254" class="t-muted" font-size="9" text-anchor="middle">casos de uso + relatorios</text>
 
         <rect x="890" y="145" width="150" height="60" rx="6" class="c-mask"/>
         <rect x="890" y="145" width="150" height="60" rx="6" class="c-messagebus" stroke-width="1.5"/>
@@ -694,7 +694,8 @@
           <h3>API</h3>
         </div>
         <ul>
-          <li>&bull; api/http serve /api/health e mapeia erro de dominio</li>
+          <li>&bull; api/http serve health, CRUD de Goal, /api/reports e /api/dashboard</li>
+          <li>&bull; Erro de dominio vira status HTTP num mapeamento unico</li>
           <li>&bull; api/json e a unica serializacao de enums e VOs</li>
         </ul>
       </div>
@@ -702,9 +703,10 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot violet"></div>
-          <h3>Persistencia</h3>
+          <h3>Aplicacao e persistencia</h3>
         </div>
         <ul>
+          <li>&bull; Casos de uso de Goal e Reminder, mais o servico de relatorios</li>
           <li>&bull; Contratos vendor-neutral com implementacao in-memory</li>
           <li>&bull; PostgreSQL concreto para Goal e Reminder, com migrations</li>
         </ul>
@@ -716,7 +718,9 @@
           <h3>Pendente</h3>
         </div>
         <ul>
-          <li>&bull; Endpoints de dominio, relatorios e adapters de Task/User</li>
+          <li>&bull; Endpoints de Task, Reminder e User; adapters de Task e User</li>
+          <li>&bull; Casos de uso de Task</li>
+          <li>&bull; Front-end ainda consome mocks, nao a API</li>
           <li>&bull; httplib e nlohmann so entram com as flags de build</li>
         </ul>
       </div>

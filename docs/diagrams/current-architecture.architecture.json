@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Virtual Planner - Arquitetura Atual",
-    "subtitle": "Monorepo com API HTTP, dominio completo e adapters PostgreSQL de Goal e Reminder",
+    "subtitle": "Monorepo com API HTTP servindo Goal e relatorios, dominio completo e adapters PostgreSQL de Goal e Reminder",
     "output": "current-architecture.html",
     "viewBox": [
       1120,
@@ -15,7 +15,7 @@
       "id": "frontend",
       "type": "frontend",
       "label": "front-end",
-      "sublabel": "React + Vite",
+      "sublabel": "React + Vite (mocks)",
       "pos": [
         40,
         80
@@ -29,7 +29,7 @@
       "id": "api",
       "type": "backend",
       "label": "api",
-      "sublabel": "http + json",
+      "sublabel": "http/routes + json",
       "pos": [
         240,
         80
@@ -113,7 +113,7 @@
       "id": "application",
       "type": "backend",
       "label": "application",
-      "sublabel": "casos de uso Goal/Reminder",
+      "sublabel": "casos de uso + relatorios",
       "pos": [
         670,
         210
@@ -327,14 +327,16 @@
       "dot": "emerald",
       "title": "API",
       "items": [
-        "api/http serve /api/health e mapeia erro de dominio",
+        "api/http serve health, CRUD de Goal, /api/reports e /api/dashboard",
+        "Erro de dominio vira status HTTP num mapeamento unico",
         "api/json e a unica serializacao de enums e VOs"
       ]
     },
     {
       "dot": "violet",
-      "title": "Persistencia",
+      "title": "Aplicacao e persistencia",
       "items": [
+        "Casos de uso de Goal e Reminder, mais o servico de relatorios",
         "Contratos vendor-neutral com implementacao in-memory",
         "PostgreSQL concreto para Goal e Reminder, com migrations"
       ]
@@ -343,7 +345,9 @@
       "dot": "rose",
       "title": "Pendente",
       "items": [
-        "Endpoints de dominio, relatorios e adapters de Task/User",
+        "Endpoints de Task, Reminder e User; adapters de Task e User",
+        "Casos de uso de Task",
+        "Front-end ainda consome mocks, nao a API",
         "httplib e nlohmann so entram com as flags de build"
       ]
     }
