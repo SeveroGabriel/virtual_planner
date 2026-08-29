@@ -110,6 +110,9 @@ Endpoints disponíveis hoje:
 | Método e rota | O que faz |
 | --- | --- |
 | `GET /api/health` | responde sempre 200, e informa se o banco está configurado e conectado |
+| `POST /api/auth/register` | cria uma conta; senha com no mínimo 12 caracteres |
+| `POST /api/auth/login` | devolve o cookie `vp_session` |
+| `POST /api/auth/logout` | invalida a sessão |
 | `GET /api/goals?period=&date=` | lista metas do período civil (`weekly`, `monthly` ou `yearly`) |
 | `GET /api/goals/:id` | busca uma meta |
 | `POST /api/goals` | cria uma meta |
@@ -123,12 +126,15 @@ Erro de domínio vira status HTTP num mapeamento único: `400` para validação,
 
 Os endpoints de Task, Reminder e User ainda não existem.
 
-> **A API não tem autenticação.** Qualquer pessoa que alcance a porta lê, altera e
-> apaga dados, e lê todos os relatórios. É uma decisão registrada na ADR-002, que
-> descreve o sistema como single-tenant de uso local — e vale enquanto o servidor
-> ficar no `localhost`. Por isso `VP_HTTP_HOST` deve continuar em `127.0.0.1` fora
-> de container, e o `docker-compose.yml` publica todas as portas apenas no
-> loopback. Não mude para `0.0.0.0` antes de existir autenticação.
+> **Toda rota exige sessão**, com três exceções: `GET /api/health` e as duas de
+> `POST /api/auth/{register,login}`. Sem cookie válido a resposta é `401` —
+> inclusive para caminho que não existe, para que ninguém mapeie a API só
+> variando o caminho. Cada recurso pertence a um usuário: pedir o de outra
+> pessoa responde `404`, e não `403`, porque um `403` confirmaria que aquele
+> identificador existe.
+>
+> Ainda assim, mantenha `VP_HTTP_HOST` em `127.0.0.1` fora de container. Não
+> existe HTTPS aqui, e sem ele o cookie de sessão trafega em texto claro.
 
 ## Configuração do PostgreSQL
 
@@ -230,6 +236,254 @@ Com o PostgreSQL de pé (`docker compose up -d postgres`), aplique as migraçõe
 ```
 
 O script é idempotente (não reaplica migrações já registradas), roda cada migração em transação e usa as mesmas variáveis de ambiente de `back-end/.env.example` (`POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSLMODE`). Veja `back-end/migrations/README.md` para detalhes.
+
+## Tutorial: consumindo os dados do banco
+
+Do zero até ler uma meta gravada no PostgreSQL. Todos os comandos abaixo foram
+executados de verdade — as respostas são as reais, não ilustrativas.
+
+### O que persiste, e o que não persiste
+
+Antes de começar, uma ressalva que evita meia hora de confusão:
+
+| Dado | Onde vive |
+| --- | --- |
+| `Goal` | PostgreSQL, tabela `goals` |
+| `Reminder` | PostgreSQL, tabela `reminders` |
+| `Task` | apenas em memória — não há adapter PostgreSQL |
+| `User` e sessões | apenas em memória — não há adapter PostgreSQL |
+
+**Reiniciar o processo apaga as contas**, mesmo com `VP_USE_POSTGRES=true`. As
+metas continuam no banco, mas você precisa registrar o usuário de novo — e o
+`user_id` novo pode não bater com o das metas antigas. É limitação conhecida:
+falta o adapter de `User` e a migration da coluna de senha.
+
+### 1. Suba o banco
+
+```bash
+cp .env.example .env    # e troque POSTGRES_PASSWORD
+docker compose up -d postgres
+```
+
+`POSTGRES_PASSWORD` não tem valor padrão: sem ela o compose para com erro, em
+vez de subir com uma senha publicada neste repositório.
+
+### 2. Aplique as migrações
+
+```bash
+set -a && source .env && set +a
+export POSTGRES_HOST=127.0.0.1
+./scripts/db-migrate.sh
+```
+
+O script é idempotente: rodar duas vezes não reaplica nada. É ele que cria a
+coluna `goals.user_id`, sem a qual nenhuma consulta funciona.
+
+### 3. Compile com PostgreSQL e HTTP
+
+```bash
+cmake -S back-end -B back-end/build-full \
+  -DVIRTUAL_PLANNER_WITH_POSTGRES=ON \
+  -DVIRTUAL_PLANNER_WITH_HTTP=ON
+cmake --build back-end/build-full
+```
+
+No macOS com Homebrew, acrescente
+`-DCMAKE_PREFIX_PATH="$(brew --prefix libpqxx);$(brew --prefix libpq)"`.
+
+### 4. Suba a API apontando para o banco
+
+```bash
+VP_USE_POSTGRES=true VP_HTTP_HOST=127.0.0.1 VP_HTTP_PORT=8080 \
+  ./back-end/build-full/virtual_planner
+```
+
+Em outro terminal, confirme que a API subiu **e** enxergou o banco:
+
+```bash
+curl -s http://127.0.0.1:8080/api/health
+```
+
+```json
+{"app":"virtual-planner","database":{"configured":true,"connected":true},
+ "profile":"development","status":"ok"}
+```
+
+Se vier `"connected":false`, a API está de pé mas o banco não respondeu —
+confira `POSTGRES_HOST` e se o container está rodando. O `status` fica
+`degraded` nesse caso.
+
+### 5. Crie uma conta e entre
+
+Sem sessão, tudo responde `401`:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  "http://127.0.0.1:8080/api/goals?period=weekly&date=2026-08-05"
+```
+
+```
+401
+```
+
+> As aspas em volta da URL não são decorativas: sem elas o `zsh` tenta expandir
+> o `?` como glob e o comando falha antes de sair da máquina.
+
+Registre e faça login guardando o cookie num arquivo (`-c` grava, `-b` envia):
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Alice","email":"alice@example.com","password":"uma-senha-de-verdade"}'
+```
+
+```json
+{"email":"alice@example.com","id":1}
+```
+
+```bash
+curl -s -c cookies.txt -X POST http://127.0.0.1:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@example.com","password":"uma-senha-de-verdade"}'
+```
+
+Responde `204` e grava `vp_session` em `cookies.txt`. A senha exige no mínimo
+12 caracteres; menos que isso responde `400`:
+
+```json
+{"error":{"code":"validation_error","message":"Password must contain at least 12 characters."}}
+```
+
+### 6. Grave e leia dados
+
+Todas as chamadas a seguir usam `-b cookies.txt`.
+
+**Criar** — responde `201`, com `Location` apontando para o recurso:
+
+```bash
+curl -s -b cookies.txt -X POST http://127.0.0.1:8080/api/goals \
+  -H 'Content-Type: application/json' \
+  -d '{"description":"Estudar C++","category":"Study",
+       "period":"Weekly","reference_date":"2026-08-05"}'
+```
+
+```json
+{"category":"Study","description":"Estudar C++","id":1,"period":"Weekly",
+ "reference_date":"2026-08-05","status":"In Progress"}
+```
+
+**Listar por período** — `period` aceita `weekly`, `monthly` ou `yearly`, e
+`date` é a data de referência que define o intervalo:
+
+```bash
+curl -s -b cookies.txt \
+  "http://127.0.0.1:8080/api/goals?period=weekly&date=2026-08-05"
+```
+
+```json
+[{"category":"Study","description":"Estudar C++","id":1,"period":"Weekly",
+  "reference_date":"2026-08-05","status":"In Progress"}]
+```
+
+**Alterar o status** — endpoint próprio, separado da atualização de dados:
+
+```bash
+curl -s -b cookies.txt -X PATCH http://127.0.0.1:8080/api/goals/1/status \
+  -H 'Content-Type: application/json' -d '{"status":"Completed"}'
+```
+
+**Relatório do período** — agrega só o que é seu:
+
+```bash
+curl -s -b cookies.txt \
+  "http://127.0.0.1:8080/api/reports?period=weekly&date=2026-08-05"
+```
+
+```json
+{"start_date":"2026-08-03","end_date":"2026-08-09","goals_total":1,
+ "goals_completed":1,"goals_ratio":1.0,"productivity_index":1.0,
+ "goal_categories":[{"label":"Study","ratio":1.0,"score":1.0,"total":1}], ...}
+```
+
+A meta concluída no passo anterior aparece aqui: `goals_completed` foi a 1 e a
+razão fechou em `1.0`. `start_date` e `end_date` mostram que a semana ISO de
+`2026-08-05` vai de segunda a domingo.
+
+Razão com denominador zero vem como `null`, e nunca `0`. A distinção importa:
+`null` é "não há o que medir", `0.0` é "havia o que medir e não foi feito".
+
+### 7. Confira direto no banco
+
+É aqui que se prova que o dado atravessou a aplicação e chegou ao PostgreSQL:
+
+```bash
+docker compose exec postgres \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -c "SELECT id, user_id, description, status, reference_date FROM goals ORDER BY id;"
+```
+
+```
+ id | user_id |  description  |  status   | reference_date
+----+---------+---------------+-----------+----------------
+  1 |       1 | Estudar C++   | Completed | 2026-08-05
+```
+
+A coluna `user_id` é o ponto: **toda consulta do adapter filtra por ela**. Um
+`SELECT` sem esse filtro, feito à mão, enxerga as linhas de todo mundo — o
+isolamento vive na aplicação, não em RLS do PostgreSQL.
+
+### 8. O isolamento na prática
+
+Registre um segundo usuário e repita as leituras com o cookie dele:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Bob","email":"bob@example.com","password":"outra-senha-boa-123"}'
+curl -s -c bob.txt -X POST http://127.0.0.1:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"bob@example.com","password":"outra-senha-boa-123"}'
+```
+
+| O que Bob faz | Resposta |
+| --- | --- |
+| `GET /api/goals/1` (a meta da Alice) | `404` |
+| `GET /api/goals?period=weekly&date=...` | `[]` |
+| `GET /api/reports?...` | `goals_total: 0`, `goals_ratio: null` |
+
+O `404` é deliberado: um `403` diria a Bob que aquele identificador existe.
+
+### Erros comuns
+
+| Sintoma | Causa provável |
+| --- | --- |
+| `401` em tudo | falta `-b cookies.txt`, ou a sessão morreu com o restart |
+| `"connected":false` no health | `POSTGRES_HOST` errado, ou container fora do ar |
+| `no matches found` no shell | URL com `?` sem aspas, no `zsh` |
+| `400 validation_error` no registro | senha com menos de 12 caracteres |
+| `relation "goals" does not exist` | faltou rodar `./scripts/db-migrate.sh` |
+| Conta some após reiniciar | esperado: `User` só existe em memória |
+
+### Consumindo pelo código, sem HTTP
+
+Quem escreve backend não passa pela API: usa o repositório direto. O contrato
+exige o dono na assinatura, então não há como esquecer de filtrar.
+
+```cpp
+#include "virtual_planner/infrastructure/postgres/postgres_goal_repository.hpp"
+
+infrastructure::postgres::PostgresGoalRepository goals{database};
+
+// O dono é obrigatório: sem ele isto não compila.
+const auto minhas = goals.find_by_date_range(
+    domain::Date{3, 8, 2026}, domain::Date{9, 8, 2026}, user_id);
+
+const auto uma = goals.find_by_id(1, user_id);  // nullopt se for de outro dono
+```
+
+Trocar PostgreSQL por `InMemoryGoalRepository` não muda uma linha de quem chama:
+ambos implementam `persistence::GoalRepository`. É o que permite a suíte de
+testes rodar sem banco nenhum.
 
 ## Testes
 
