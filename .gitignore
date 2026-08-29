@@ -8,6 +8,11 @@ back-end/build/
 back-end/build-*/
 back-end/cmake-build-*/
 
+# Lixo de um cmake rodado dentro da arvore de fontes, em vez de num build-*/.
+# Sem isto o CMakeFiles/ aparece como nao rastreado e acaba num commit.
+CMakeFiles/
+CMakeCache.txt
+
 # Frontend (Node/Vite)
 front-end/node_modules/
 front-end/dist/
