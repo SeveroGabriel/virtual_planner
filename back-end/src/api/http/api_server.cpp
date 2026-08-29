@@ -223,7 +223,10 @@ void ApiServer::register_cors()
                                             "GET, POST, PUT, PATCH, DELETE, OPTIONS");
                         response.set_header("Access-Control-Allow-Headers",
                                             "Content-Type");
-                        response.set_header("Access-Control-Allow-Credentials", "true");
+                        // Allow-Credentials NAO entra aqui: o post-routing
+                        // handler ja o acrescenta em toda resposta, incluindo
+                        // esta. Duas ocorrencias do mesmo cabecalho invalidam a
+                        // checagem de CORS e o navegador recusa o preflight.
                         response.set_header("Access-Control-Max-Age", "86400");
                         response.status = 204;
                     });

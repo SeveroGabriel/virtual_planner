@@ -655,6 +655,75 @@ npm run dev
 
 `.github/workflows/frontend.yml` roda em Node 22 a cada push em `main` e a cada pull request que toque `front-end/**`, executando `npm ci`, `npm run build` e `npm run lint`. Rode os três localmente antes de abrir PR: o job falha no primeiro erro de tipo ou de lint.
 
+### Ligando o front-end à API
+
+As telas de **metas** já consomem o backend de verdade quando `VITE_API_URL`
+está definida. Sem a variável, caem nos mocks — que é o padrão, para um clone
+limpo rodar sem backend.
+
+`Task` e `Reminder` continuam em mock mesmo com a variável definida: não existem
+endpoints para eles ainda. A escolha fica em `src/lib/api/virtualPlannerApi.ts`,
+num lugar só, então ligar o resto depois é mudança de um arquivo.
+
+**Em desenvolvimento**, com o backend rodando em `127.0.0.1:8080`:
+
+```bash
+cd front-end
+echo 'VITE_API_URL=/api' > .env
+npm run dev
+```
+
+O `vite.config.ts` faz proxy de `/api` para o backend. **Use o caminho
+relativo, não a URL absoluta** — e o motivo não é estilo: o cookie de sessão é
+`SameSite=Strict` e só viaja em requisição do mesmo site. Apontando
+`VITE_API_URL` direto para `http://127.0.0.1:8080`, o login responde 204 e
+**todas** as chamadas seguintes voltam 401, porque o cookie fica para trás. É
+uma falha silenciosa e confusa; o proxy a elimina.
+
+Para apontar o proxy a outro endereço, use `VP_API_TARGET`.
+
+**No `docker compose`**, já vem configurado: o build do `web` recebe
+`VITE_API_URL=/api` e o `nginx.conf` faz o proxy para o serviço `api`. Front e
+backend ficam na mesma origem, sem CORS e sem cookie cross-site.
+
+**Ainda não há tela de login.** Enquanto ela não existir, autentique pelo
+console do navegador uma vez por sessão:
+
+```js
+await fetch("/api/auth/register", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name: "Alice", email: "alice@example.com",
+                         password: "uma-senha-de-verdade" }),
+});
+await fetch("/api/auth/login", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email: "alice@example.com",
+                         password: "uma-senha-de-verdade" }),
+});
+```
+
+Sem isso as telas mostram lista vazia e um `401` no console. É a próxima peça
+a construir.
+
+#### Como está montado
+
+```text
+front-end/src/lib/api
+├── config.ts             # lê VITE_API_URL e decide backend ou mock
+├── httpClient.ts         # fetch com credentials, e erro da API vira ApiError
+├── goalsApi.ts           # endpoints de Goal
+├── authApi.ts            # register, login, logout
+└── virtualPlannerApi.ts  # fachada das telas: roteia Goal, mantém o resto mock
+```
+
+O `httpClient` usa `credentials: "include"` em toda requisição. Sem isso o
+navegador não envia o cookie `HttpOnly` da sessão, e nada funciona. Não há token
+em `localStorage` de propósito: é o que impede um XSS de roubar a sessão.
+
 ### Estrutura
 
 ```text
