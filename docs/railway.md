@@ -30,9 +30,18 @@ referências Railway nas variáveis `POSTGRES_*`, sem novo parser de
 pelo aplicativo; use o mapeamento abaixo e `VP_HTTP_ALLOWED_ORIGINS`.
 
 Não foram adicionados `railway.json`/`railway.toml`: a documentação atual marca
-Config as Code como legado, com migração para IaC. Para manter esta preparação
-pequena e sem provisionamento, os ajustes ficam nas imagens e no setup manual.
+Config as Code como legado, com migração para IaC. A configuração declarativa
+está em [`.railway/railway.ts`](../.railway/railway.ts), com dois serviços de
+aplicação, Root Directories separadas, builder Dockerfile e PostgreSQL.
+Veja [validação e aplicação segura](../.railway/README.md). O arquivo não
+altera o ambiente remoto por commit/push; precisa de revisão e aplicação
+explícita pela CLI. Nenhuma aplicação foi executada nesta preparação.
 [Referência: Config as Code](https://docs.railway.com/config-as-code/reference).
+
+Se o log ainda mostra `Railpack` e lista `back-end/` e `front-end/` juntas,
+o deployment continua recebendo a raiz. Não há correção adicional em C++ ou
+React para esse estado: é necessário aplicar a Root Directory ao serviço e
+ambiente que geraram o log. Não crie `start.sh` nem um Dockerfile na raiz.
 
 ## Setup manual
 

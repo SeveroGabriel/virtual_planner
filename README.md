@@ -178,6 +178,8 @@ As imagens aceitam `PORT`; o nginx recebe `BACKEND_URL` em runtime e mantém `/a
 mesma origem. As migrations estão incluídas na imagem da API para execução
 explícita no pre-deploy. O guia inclui variáveis, TLS, health checks, limites
 das sessões em memória e validação local, sem depender do Compose na Railway.
+A [configuração declarativa](.railway/README.md) registra os três serviços e
+suas Root Directories; sua aplicação remota é separada e exige revisão do plano.
 
 ## Docker
 

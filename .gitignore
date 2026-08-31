@@ -17,6 +17,9 @@ CMakeCache.txt
 front-end/node_modules/
 front-end/dist/
 
+# SDK usado somente para validar/configurar a infraestrutura Railway.
+.railway/node_modules/
+
 *.o
 *.obj
 *.a
