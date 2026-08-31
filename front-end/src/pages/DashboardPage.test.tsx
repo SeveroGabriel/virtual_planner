@@ -132,7 +132,9 @@ describe("DashboardPage", () => {
       within(categories).getByRole("rowheader", { name: "Estudos" }),
     ).toBeVisible();
     expect(
-      await screen.findByRole("link", { name: "Lembrete: Revisão semanal" }),
+      await screen.findByRole("link", {
+        name: "11:00–11:30 Lembrete: Revisão semanal",
+      }),
     ).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "18" }));
@@ -142,7 +144,9 @@ describe("DashboardPage", () => {
     ).toBeVisible();
     await waitFor(() =>
       expect(
-        screen.queryByRole("link", { name: "Lembrete: Revisão semanal" }),
+        screen.queryByRole("link", {
+          name: "11:00–11:30 Lembrete: Revisão semanal",
+        }),
       ).toBeNull(),
     );
     expect(
