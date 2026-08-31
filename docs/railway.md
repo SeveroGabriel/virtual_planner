@@ -39,9 +39,10 @@ pequena e sem provisionamento, os ajustes ficam nas imagens e no setup manual.
 1. No projeto/ambiente desejado, adicione o PostgreSQL oficial e nomeie-o
    `Postgres`. Adicione dois serviços do repositório, `backend` e `frontend`.
    Os nomes precisam coincidir com as referências dos exemplos de variáveis.
-2. Nos dois serviços de código, mantenha **Root Directory na raiz `/`**.
-   Os Dockerfiles copiam caminhos relativos à raiz, e a API também inclui
-   `scripts/db-migrate.sh`. Não use `/back-end` ou `/front-end` como raiz.
+2. Em Settings → Source, configure **Root Directory `/back-end`** na API
+   e **`/front-end`** no frontend. Ambos usam o mesmo repositório
+   `https://github.com/tiagojose76/virtual-planner`. Não publique um serviço
+   da aplicação pela raiz: cada Dockerfile usa apenas seu próprio contexto.
 3. Configure os Dockerfiles, variáveis e checks da tabela. Gere domínio HTTPS
    somente para `frontend`, para então resolver sua referência de origem.
 4. Revise as migrations e configure o pre-deploy do backend antes de publicar.
@@ -50,10 +51,13 @@ pequena e sem provisionamento, os ajustes ficam nas imagens e no setup manual.
 
 | Configuração | backend | frontend |
 | --- | --- | --- |
-| Root Directory | `/` | `/` |
-| `RAILWAY_DOCKERFILE_PATH` | `back-end/Dockerfile` | `front-end/Dockerfile` |
+| Repository | `tiagojose76/virtual-planner` | `tiagojose76/virtual-planner` |
+| Root Directory | `/back-end` | `/front-end` |
+| Builder | Dockerfile | Dockerfile |
+| Dockerfile Path | `Dockerfile` | `Dockerfile` |
+| Port | `PORT=8080`, bind `0.0.0.0` | `PORT=8080`, nginx |
 | Start Command | deixar vazio: `virtual_planner` da imagem | deixar vazio: entrypoint oficial nginx |
-| Pre-deploy Command | `/app/scripts/db-migrate.sh` | nenhum |
+| Pre-deploy Command | `/app/migrations/db-migrate.sh` | nenhum |
 | Pre-deploy timeout | 300 s, ajustar após medir migrations | — |
 | Healthcheck Path | `/health` | `/health` |
 | Healthcheck timeout | 300 s | 300 s |
@@ -62,8 +66,21 @@ pequena e sem provisionamento, os ajustes ficam nas imagens e no setup manual.
 
 Não sobrescreva o start do nginx: seu entrypoint renderiza o template com as
 variáveis de ambiente. Para detectar mudanças, os caminhos relevantes são
-`back-end/**` e `scripts/db-migrate.sh` na API, `front-end/**` no frontend e
-`.dockerignore` em ambos; deixar watch patterns sem restrição também funciona.
+`/back-end/**` na API e `/front-end/**` no frontend; cada pasta inclui seu
+próprio `.dockerignore`. Deixar watch patterns sem restrição também funciona.
+
+Remova overrides antigos de Build Command e Start Command, especialmente
+`start.sh`, e qualquer `RAILWAY_DOCKERFILE_PATH` apontando para a raiz. Se
+configurar essa variável explicitamente, use `RAILWAY_DOCKERFILE_PATH=Dockerfile`
+em ambos. O Dockerfile local é detectado após definir a Root Directory.
+Confirme no log futuro a detecção do Dockerfile, sem inferência pelo Railpack.
+
+O erro relatado `Script start.sh not found` / `Railpack could not determine
+how to build the app` é compatível com um serviço apontando para a raiz
+sem Dockerfile. Além disso, os Dockerfiles anteriores dependiam de caminhos
+da raiz. Não existe necessidade de criar `start.sh`: o backend usa
+`CMD ["virtual_planner"]` e o frontend herda `/docker-entrypoint.sh` com
+`nginx -g "daemon off;"` da imagem oficial. A configuração remota não foi acessada.
 
 [Dockerfile customizado](https://docs.railway.com/builds/dockerfiles),
 [monorepos](https://docs.railway.com/deployments/monorepo) e
@@ -150,7 +167,11 @@ são melhorias separadas antes de ampliar o uso público. Cadastro é aberto.
 
 ## Migrations e prontidão
 
-A imagem da API inclui `psql`, o script existente e os SQLs versionados.
+A imagem da API inclui `psql`, `back-end/migrations/db-migrate.sh` e os SQLs
+versionados, instalados em `/app/migrations`. O migrador pertence ao backend
+e não depende de arquivos fora de `/back-end`. O comando local/CI
+`./scripts/db-migrate.sh` permanece como wrapper para esse mesmo script,
+sem duplicar lógica nem alterar os SQLs.
 O script só roda quando invocado; não há migração automática no start nem
 conexão ao banco durante o Docker build. O pre-deploy usa as mesmas variáveis
 do runtime, executa migrations pendentes em ordem e registra cada uma em
@@ -189,8 +210,8 @@ cd ..
 cmake -S back-end -B back-end/build-debug -DCMAKE_BUILD_TYPE=Debug
 cmake --build back-end/build-debug --parallel 2
 ctest --test-dir back-end/build-debug --output-on-failure
-docker build -f back-end/Dockerfile -t vp-railway-api:local .
-docker build -f front-end/Dockerfile -t vp-railway-web:local .
+docker build -t virtual-planner-backend ./back-end
+docker build -t virtual-planner-frontend ./front-end
 ```
 
 Para integração, use um banco **descartável**, aplique migrations pela imagem
@@ -213,13 +234,41 @@ SPA `/planner`, assets, execução repetida de migrations sem duplicação,
 prontidão 503 após queda do banco e novo login com dados preservados após
 restart. Não rode testes de escrita contra o banco de aula ou produção.
 
-O `docker-compose.yml` local não foi alterado: seus padrões continuam
+O `docker-compose.yml` usa `context: ./back-end` na API e `context: ./front-end`
+no web, ambos com `dockerfile: Dockerfile`. O serviço local `migrate` continua
+executando o wrapper e usando o banco separado. Seus padrões continuam
 `api:8080`, nginx em 80 (publicado em 8081) e perfil development. Não altere
 o `.env` local para testar produção; use outra stack e outro volume.
 
-### Resultado desta preparação — 31/08/2026
+### Validação dos contextos independentes — 31/08/2026
 
-Validação local em macOS/ARM64 e containers Linux/ARM64, sem acesso à Railway:
+Executada localmente em containers Linux/ARM64, sem acessar a Railway:
+
+| Verificação | Resultado |
+| --- | --- |
+| `docker build -t virtual-planner-backend ./back-end` | PASS |
+| `docker build -t virtual-planner-frontend ./front-end` | PASS — inclui TypeScript/Vite |
+| Startup API com `PORT=19080` e bind `0.0.0.0` | PASS — `/health` 200 com PostgreSQL conectado |
+| Startup nginx com `PORT=19081` | PASS — `/health`, SPA e assets |
+| `docker compose up -d --build --wait` | PASS — projeto, banco e portas descartáveis |
+| Smoke existente via Compose e via proxy em portas dinâmicas | PASS — auth, CRUD, isolamento e relatórios |
+| Wrapper local e migrador incluído na imagem | PASS — 12 migrations aplicadas, segunda execução sem reaplicar |
+| Scripts sem `POSTGRES_PASSWORD` | PASS — falham com código 1 e mensagem explícita |
+| `bash -n` e `git diff --check` | PASS |
+
+O Compose foi testado com override apenas de tags de imagem e portas do host
+(25432, 28080, 28081), mantendo as portas internas padrão. Os containers
+avulsos usaram 19080/19081 para comprovar `PORT`, sem comando de start customizado.
+O teste avulso precisou reiniciar o nginx após anexá-lo à rede Docker para
+atualizar seu resolver; em uso normal, conecte a rede antes de iniciar o serviço.
+Nesta correção, o runtime foi validado em `development`; os testes HTTPS/TLS
+da preparação anterior estão separados abaixo. Não houve nova execução das
+suítes unitárias, alteração de C++/React, deploy ou validação na Railway real.
+
+### Histórico da preparação inicial — 31/08/2026
+
+Resultados da preparação anterior, antes da separação dos contextos Docker,
+em macOS/ARM64 e containers Linux/ARM64, sem acesso à Railway:
 
 | Verificação executada | Resultado |
 | --- | --- |

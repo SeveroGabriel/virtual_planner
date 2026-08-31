@@ -171,7 +171,10 @@ Tudo com o prefixo `VITE_` é embutido no bundle e fica visível no navegador. N
 
 O [guia de produção na Railway](docs/railway.md) descreve três serviços no
 mesmo projeto/ambiente: frontend HTTPS, API privada e PostgreSQL. As imagens
-aceitam `PORT`; o nginx recebe `BACKEND_URL` em runtime e mantém `/api` na
+usam contextos independentes: Root Directory `/back-end` para a API e
+`/front-end` para o frontend, ambos com Builder Dockerfile e caminho `Dockerfile`.
+Não configure um serviço da aplicação pela raiz nem um `start.sh`.
+As imagens aceitam `PORT`; o nginx recebe `BACKEND_URL` em runtime e mantém `/api` na
 mesma origem. As migrations estão incluídas na imagem da API para execução
 explícita no pre-deploy. O guia inclui variáveis, TLS, health checks, limites
 das sessões em memória e validação local, sem depender do Compose na Railway.

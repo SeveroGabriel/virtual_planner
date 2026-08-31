@@ -1,7 +1,6 @@
-# Imagem do backend. Contexto de build e a RAIZ do repositorio, nao back-end/,
-# porque o compose precisa do mesmo contexto para os dois servicos.
+# Imagem independente do backend. Contexto de build: back-end/.
 #
-#   docker build -f back-end/Dockerfile .
+#   docker build -t virtual-planner-backend ./back-end
 
 # --------------------------------------------------------------------------
 # Estagio de build
@@ -39,7 +38,7 @@ RUN git clone --depth 1 --branch "${LIBPQXX_VERSION}" \
  && rm -rf /tmp/libpqxx
 
 WORKDIR /src
-COPY back-end/ back-end/
+COPY . back-end/
 
 # A imagem só precisa do binário do app. Buildar tudo (`cmake --build build`)
 # compila também as ~40 binárias de teste, e em máquina pequena (Codespace de
@@ -72,8 +71,8 @@ COPY --from=builder /opt/libpqxx/lib/ /usr/local/lib/
 RUN ldconfig
 
 COPY --from=builder /src/build/virtual_planner /usr/local/bin/virtual_planner
-COPY --chmod=755 scripts/db-migrate.sh /app/scripts/db-migrate.sh
-COPY back-end/migrations/*.sql /app/back-end/migrations/
+COPY --chmod=755 migrations/db-migrate.sh /app/migrations/db-migrate.sh
+COPY migrations/*.sql /app/migrations/
 
 # Usuario nao-root: o processo so precisa abrir uma porta alta e falar com o
 # banco pela rede.

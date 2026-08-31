@@ -1,7 +1,6 @@
-# Imagem do frontend. Contexto de build e a RAIZ do repositorio, nao
-# front-end/, para casar com o contexto usado pelo backend no compose.
+# Imagem independente do frontend. Contexto de build: front-end/.
 #
-#   docker build -f front-end/Dockerfile .
+#   docker build -t virtual-planner-frontend ./front-end
 
 # --------------------------------------------------------------------------
 # Estagio de build
@@ -12,10 +11,10 @@ WORKDIR /app
 
 # package.json e lock primeiro: enquanto as dependencias nao mudarem, o docker
 # reaproveita a camada do npm ci e o rebuild so refaz o bundle.
-COPY front-end/package.json front-end/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY front-end/ ./
+COPY . ./
 
 # O Vite embute as VITE_* em tempo de BUILD, entao a base da API precisa entrar
 # aqui e nao como variavel do container. O padrao "/api" e relativo: o bundle
@@ -32,7 +31,7 @@ RUN npm run build
 FROM nginx:1.27-alpine AS runtime
 
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY front-end/nginx.conf /etc/nginx/templates/default.conf.template
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # O entrypoint oficial renderiza o template em runtime. O filtro preserva as
 # variaveis do nginx ($uri, $host etc.) mesmo que existam no ambiente.

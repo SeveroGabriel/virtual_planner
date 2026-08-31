@@ -63,8 +63,8 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: back-end/Dockerfile
+      context: ./back-end
+      dockerfile: Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,8 +102,8 @@ services:
 
   web:
     build:
-      context: .
-      dockerfile: front-end/Dockerfile
+      context: ./front-end
+      dockerfile: Dockerfile
       args:
         # Caminho relativo: o bundle chama a propria origem e o nginx faz o
         # proxy para o servico `api`. Evita CORS e mantem o cookie de sessao
