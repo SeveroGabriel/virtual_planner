@@ -68,6 +68,7 @@ fi
 # A senha nunca é impressa: fica apenas em variável de ambiente para o psql.
 export PGPASSWORD="${POSTGRES_PASSWORD}"
 export PGSSLMODE="${POSTGRES_SSLMODE}"
+export PGCONNECT_TIMEOUT="${POSTGRES_CONNECT_TIMEOUT:-5}"
 
 PSQL_BASE_ARGS=(-h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 --no-psqlrc)
 

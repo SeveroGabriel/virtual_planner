@@ -245,6 +245,7 @@ void ApiServer::register_authentication_gate()
     server_.set_pre_routing_handler(
         [this](const httplib::Request& request, httplib::Response& response) {
             const bool public_route = request.path == "/api/health" ||
+                (request.method == "GET" && request.path == "/health") ||
                 (request.method == "POST" &&
                  (request.path == "/api/auth/register" ||
                   request.path == "/api/auth/login")) ||
@@ -279,8 +280,8 @@ void ApiServer::register_request_log()
 
 void ApiServer::register_health_route()
 {
-    server_.Get("/api/health",
-                [this](const httplib::Request&, httplib::Response& response) {
+    const auto health =
+                [this](const httplib::Request& request, httplib::Response& response) {
                     const bool database_configured = database_ != nullptr;
                     const bool database_connected =
                         database_configured && database_->is_connected();
@@ -294,18 +295,26 @@ void ApiServer::register_health_route()
                         {"connected", database_connected},
                     };
 
-                    // Sempre 200: a resposta chegar ja prova que o processo
-                    // esta de pe, que e o que um health check precisa saber.
-                    // "degraded" cobre o caso de o banco estar configurado e
-                    // fora do ar — informacao para quem consome, nao falha do
-                    // servidor.
+                    // Preserva /api/health como liveness. /health e readiness:
+                    // a Railway exige HTTP 200 para promover o deployment.
                     body["status"] =
                         (!database_configured || database_connected)
                             ? "ok"
                             : "degraded";
 
+                    if (request.path == "/health")
+                    {
+                        const bool ready = database_connected ||
+                            (!database_configured &&
+                             config_.profile() != core::ExecutionProfile::Production);
+                        response.status = ready ? 200 : 503;
+                        body["status"] = ready ? "ok" : "degraded";
+                    }
+
                     response.set_content(body.dump(), "application/json");
-                });
+                };
+    server_.Get("/api/health", health);
+    server_.Get("/health", health);
 }
 
 } // namespace virtual_planner::api::http

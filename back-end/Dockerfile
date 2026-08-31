@@ -65,12 +65,15 @@ RUN apt-get update \
       ca-certificates \
       curl \
       libpq5 \
+      postgresql-client \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/libpqxx/lib/ /usr/local/lib/
 RUN ldconfig
 
 COPY --from=builder /src/build/virtual_planner /usr/local/bin/virtual_planner
+COPY --chmod=755 scripts/db-migrate.sh /app/scripts/db-migrate.sh
+COPY back-end/migrations/*.sql /app/back-end/migrations/
 
 # Usuario nao-root: o processo so precisa abrir uma porta alta e falar com o
 # banco pela rede.
@@ -80,9 +83,9 @@ RUN useradd --create-home --uid 10001 virtualplanner
 USER virtualplanner
 
 # NENHUMA credencial e embutida na imagem. Host e porta tem padrao porque sao
-# topologia do container, nao segredo; tudo de PostgreSQL vem do compose.
-ENV VP_HTTP_HOST=0.0.0.0 \
-    VP_HTTP_PORT=8080
+# topologia do container, nao segredo; PostgreSQL vem do ambiente.
+# Sem VP_HTTP_PORT fixo: o servidor usa PORT quando fornecido pela plataforma.
+ENV VP_HTTP_HOST=0.0.0.0
 
 EXPOSE 8080
 

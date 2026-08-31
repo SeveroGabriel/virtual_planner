@@ -103,13 +103,14 @@ VP_HTTP_HOST=127.0.0.1 VP_HTTP_PORT=8080 ./back-end/build-http/virtual_planner
 curl -s http://127.0.0.1:8080/api/health
 ```
 
-`VP_HTTP_HOST` e `VP_HTTP_PORT` são opcionais e caem em `0.0.0.0:8080` — dentro de container é o que permite ao Docker publicar a porta; fora dele, prefira `127.0.0.1`. A API sobe e responde mesmo sem PostgreSQL.
+`VP_HTTP_HOST` é opcional e cai em `0.0.0.0`; fora de container, prefira `127.0.0.1`. A porta segue `VP_HTTP_PORT` não vazio, depois `PORT` não vazio e finalmente `8080`. A API sobe e responde mesmo sem PostgreSQL em desenvolvimento.
 
 Endpoints disponíveis hoje:
 
 | Método e rota | O que faz |
 | --- | --- |
 | `GET /api/health` | responde sempre 200, e informa se o banco está configurado e conectado |
+| `GET /health` | prontidão: 503 com banco indisponível ou produção sem PostgreSQL |
 | `POST /api/auth/register` | cria uma conta; senha com no mínimo 12 caracteres |
 | `POST /api/auth/login` | devolve o cookie `vp_session` |
 | `POST /api/auth/logout` | invalida a sessão |
@@ -129,7 +130,7 @@ Erro de domínio vira status HTTP num mapeamento único: `400` para validação,
 
 Task e Reminder também oferecem CRUD completo; `/api/users/me` permite consultar e editar o perfil. `/api/tasks/conflicts?date=YYYY-MM-DD` fornece os conflitos usados pelo planejamento. Consulte o inventário completo em [docs/api.md](docs/api.md).
 
-> **Toda rota exige sessão**, com três exceções: `GET /api/health` e as duas de
+> **Toda rota exige sessão**, exceto `GET /health`, `GET /api/health` e as duas de
 > `POST /api/auth/{register,login}`. Sem cookie válido a resposta é `401` —
 > inclusive para caminho que não existe, para que ninguém mapeie a API só
 > variando o caminho. Cada recurso pertence a um usuário: pedir o de outra
@@ -165,6 +166,15 @@ Existe um `.env.example` por workspace, cada um com um escopo:
 Copie o `.env.example` de cada workspace para `.env` no mesmo diretório e ajuste os valores. Nenhum `.env` vai para o Git: o `.gitignore` ignora `.env` e `.env.*`, com exceção explícita para `.env.example`.
 
 Tudo com o prefixo `VITE_` é embutido no bundle e fica visível no navegador. Nunca coloque senha ou token em `front-end/.env`.
+
+## Railway
+
+O [guia de produção na Railway](docs/railway.md) descreve três serviços no
+mesmo projeto/ambiente: frontend HTTPS, API privada e PostgreSQL. As imagens
+aceitam `PORT`; o nginx recebe `BACKEND_URL` em runtime e mantém `/api` na
+mesma origem. As migrations estão incluídas na imagem da API para execução
+explícita no pre-deploy. O guia inclui variáveis, TLS, health checks, limites
+das sessões em memória e validação local, sem depender do Compose na Railway.
 
 ## Docker
 

@@ -48,6 +48,11 @@ VP_USE_POSTGRES=true
 
 Use `.env.example` como referência. Não versionar `.env` real.
 
+Na Railway, configure essas mesmas `POSTGRES_*` com referências às `PG*` do
+serviço PostgreSQL; não é necessário alterar o adapter. `DATABASE_URL` não é
+consumida automaticamente. O [guia Railway](railway.md) explica o mapeamento,
+TLS e execução das migrations pela imagem da API.
+
 ## Build
 
 ```bash

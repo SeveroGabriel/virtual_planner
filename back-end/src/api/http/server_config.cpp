@@ -63,8 +63,13 @@ ServerConfig ServerConfig::from_environment()
     ServerConfig config;
     config.host = read_environment_or("VP_HTTP_HOST", config.host);
 
-    const std::string port_text =
-        read_environment_or("VP_HTTP_PORT", std::to_string(config.port));
+    const char* port_variable = "VP_HTTP_PORT";
+    std::string port_text = read_environment_or(port_variable, "");
+    if (port_text.empty())
+    {
+        port_variable = "PORT";
+        port_text = read_environment_or(port_variable, std::to_string(config.port));
+    }
 
     // std::stoi aceitaria "8080abc" e pararia no primeiro caractere invalido.
     // Uma porta so parcialmente lida e pior que um erro: o servidor subiria
@@ -79,14 +84,14 @@ ServerConfig ServerConfig::from_environment()
     catch (const std::exception&)
     {
         throw shared::ConfigError(
-            "VP_HTTP_PORT must be an integer between 0 and 65535, got \""
+            std::string{port_variable} + " must be an integer between 0 and 65535, got \""
             + port_text + "\".");
     }
 
     if (consumed != port_text.size() || port < 0 || port > 65535)
     {
         throw shared::ConfigError(
-            "VP_HTTP_PORT must be an integer between 0 and 65535, got \""
+            std::string{port_variable} + " must be an integer between 0 and 65535, got \""
             + port_text + "\".");
     }
 

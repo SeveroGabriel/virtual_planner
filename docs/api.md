@@ -15,6 +15,7 @@ rota exige o cookie `vp_session`; ver [Autenticação](#autenticação).
 |---|---|---|---|---|
 | `OPTIONS` | qualquer caminho | não | `204` | `403` origem não autorizada |
 | `GET` | `/api/health` | não | `200` | — |
+| `GET` | `/health` | não | `200` | `503` não pronto |
 | `POST` | `/api/auth/register` | não | `201` | `400`, `409` |
 | `POST` | `/api/auth/login` | não | `204` | `400`, `401` |
 | `POST` | `/api/auth/logout` | sim | `204` | — |
@@ -117,14 +118,15 @@ root, só que sem servidor: ele imprime a configuração e encerra.
 
 ## Servidor
 
-O servidor escuta em `VP_HTTP_HOST` e `VP_HTTP_PORT`, documentados em
-`back-end/.env.example`. Os padrões são `0.0.0.0` e `8080`. `VP_HTTP_PORT=0`
+O servidor escuta em `VP_HTTP_HOST`. A porta usa `VP_HTTP_PORT` não vazio,
+depois `PORT` não vazio e finalmente `8080`, conforme `back-end/.env.example`.
+O host padrão é `0.0.0.0`. `VP_HTTP_PORT=0`
 pede uma porta efêmera ao sistema operacional; a porta efetivamente aberta é
 impressa na subida.
 
-Um `VP_HTTP_PORT` que não seja um inteiro entre 0 e 65535 aborta a subida com
-`shared::ConfigError` e mensagem explícita — o servidor não sobe em uma porta
-que ninguém pediu.
+A variável de porta escolhida deve ser um inteiro entre 0 e 65535; caso
+contrário, a subida aborta com `shared::ConfigError` e mensagem explícita —
+o servidor não sobe em uma porta que ninguém pediu.
 
 ## Limites
 
@@ -141,7 +143,7 @@ handler.
 
 ## Autenticação
 
-Toda rota exige sessão, com três exceções: `GET /api/health`,
+Toda rota exige sessão, exceto `GET /health`, `GET /api/health`,
 `POST /api/auth/register` e `POST /api/auth/login`. O preflight `OPTIONS`
 também passa, senão o navegador nunca chegaria a mandar a requisição real.
 
@@ -233,6 +235,17 @@ consegue esquecer de verificar, porque não compila sem o dono.
 o dono da sessão tanto no CRUD quanto na expansão de ocorrências. O valor
 padrão legado de algumas assinaturas serve aos testes anteriores ao isolamento
 e não deve ser usado como identidade em handlers HTTP.
+
+## `GET /health`
+
+Prontidão para plataformas que verificam apenas o status HTTP, como a Railway.
+Público, sem cookie. Retorna o mesmo formato JSON de `/api/health`, com **200**
+quando pronto e **503** (`status="degraded"`) quando o banco configurado não
+responde. Em `VP_PROFILE=production`, ausência de banco também retorna 503;
+desenvolvimento/teste sem banco continua permitido.
+
+Não verifica se todas as migrations foram aplicadas: o pre-deploy deve concluir
+antes da API iniciar. Não substitui monitoramento contínuo nem backup.
 
 ## `GET /api/health`
 

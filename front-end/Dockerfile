@@ -32,7 +32,14 @@ RUN npm run build
 FROM nginx:1.27-alpine AS runtime
 
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY front-end/nginx.conf /etc/nginx/conf.d/default.conf
+COPY front-end/nginx.conf /etc/nginx/templates/default.conf.template
+
+# O entrypoint oficial renderiza o template em runtime. O filtro preserva as
+# variaveis do nginx ($uri, $host etc.) mesmo que existam no ambiente.
+ENV PORT=80 \
+    BACKEND_URL=http://api:8080 \
+    NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
+    NGINX_ENVSUBST_FILTER="^(PORT|BACKEND_URL|NGINX_LOCAL_RESOLVERS)$"
 
 # Sem Node e sem node_modules na imagem final: o que vai para producao e o
 # bundle estatico. Nenhuma credencial embutida: a unica VITE_* e a base da API,

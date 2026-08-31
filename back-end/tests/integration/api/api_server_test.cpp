@@ -143,15 +143,15 @@ persistence::RepositorySet make_repositories(
     return persistence::RepositorySet{&goals, &tasks, &reminders, &users};
 }
 
-bool throws_config_error(const char* port_value)
+bool throws_config_error(const char* port_value, const char* variable = "VP_HTTP_PORT")
 {
     if (port_value == nullptr)
     {
-        ::unsetenv("VP_HTTP_PORT");
+        ::unsetenv(variable);
     }
     else
     {
-        ::setenv("VP_HTTP_PORT", port_value, 1);
+        ::setenv(variable, port_value, 1);
     }
 
     try
@@ -160,11 +160,11 @@ bool throws_config_error(const char* port_value)
     }
     catch (const shared::ConfigError&)
     {
-        ::unsetenv("VP_HTTP_PORT");
+        ::unsetenv(variable);
         return true;
     }
 
-    ::unsetenv("VP_HTTP_PORT");
+    ::unsetenv(variable);
     return false;
 }
 
@@ -207,6 +207,9 @@ int main()
                       "without a database it should not be reported as configured");
             VP_EXPECT(body.at("database").at("connected") == false,
                       "without a database it should not be reported as connected");
+            const auto ready = client.Get("/health");
+            VP_EXPECT(ready && ready->status == 200,
+                      "readiness should allow in-memory development without a session");
         });
     }
 
@@ -232,6 +235,9 @@ int main()
                       "a wired database should be reported as configured");
             VP_EXPECT(body.at("database").at("connected") == true,
                       "a connected database should be reported as connected");
+            const auto ready = client.Get("/health");
+            VP_EXPECT(ready && ready->status == 200,
+                      "readiness should succeed with a connected database");
         });
     }
 
@@ -259,6 +265,26 @@ int main()
                       "the database should still be reported as configured");
             VP_EXPECT(body.at("database").at("connected") == false,
                       "a database that is down should not be reported as connected");
+            const auto ready = client.Get("/health");
+            VP_EXPECT(ready && ready->status == 503,
+                      "readiness must fail when the configured database is down");
+            VP_EXPECT(nlohmann::json::parse(ready->body).at("status") == "degraded",
+                      "readiness should explain its unavailable status without driver errors");
+        });
+    }
+
+    // Producao nao pode ser promovida com persistencia apenas em memoria.
+    {
+        const core::AppConfig production{"virtual-planner-test",
+                                         core::ExecutionProfile::Production};
+        http_api::ApiServer server{production, repositories, nullptr, logger};
+        with_running_server(server, [](httplib::Client& client) {
+            const auto ready = client.Get("/health");
+            VP_EXPECT(ready && ready->status == 503,
+                      "production readiness requires a configured database");
+            const auto live = client.Get("/api/health");
+            VP_EXPECT(live && live->status == 200,
+                      "legacy liveness must preserve its HTTP 200 contract");
         });
     }
 
@@ -550,6 +576,7 @@ int main()
     // --- ServerConfig::from_environment ------------------------------------
     ::unsetenv("VP_HTTP_HOST");
     ::unsetenv("VP_HTTP_PORT");
+    ::unsetenv("PORT");
 
     {
         const auto defaults = http_api::ServerConfig::from_environment();
@@ -590,6 +617,27 @@ int main()
               "a negative VP_HTTP_PORT should be rejected");
     VP_EXPECT(!throws_config_error("0"),
               "VP_HTTP_PORT 0 is valid and means an ephemeral port");
+
+    {
+        ::setenv("PORT", "9123", 1);
+        VP_EXPECT(http_api::ServerConfig::from_environment().port == 9123,
+                  "Railway PORT should be used when VP_HTTP_PORT is absent");
+        ::setenv("VP_HTTP_PORT", "", 1);
+        VP_EXPECT(http_api::ServerConfig::from_environment().port == 9123,
+                  "empty VP_HTTP_PORT should fall back to PORT");
+        ::setenv("VP_HTTP_PORT", "9090", 1);
+        VP_EXPECT(http_api::ServerConfig::from_environment().port == 9090,
+                  "explicit VP_HTTP_PORT should preserve local precedence");
+        ::unsetenv("VP_HTTP_PORT");
+        ::setenv("PORT", "", 1);
+        VP_EXPECT(http_api::ServerConfig::from_environment().port == 8080,
+                  "empty PORT should preserve the default");
+        ::unsetenv("PORT");
+    }
+    VP_EXPECT(throws_config_error("invalid", "PORT"), "invalid PORT must fail");
+    VP_EXPECT(throws_config_error("9123suffix", "PORT"), "partial PORT must fail");
+    VP_EXPECT(throws_config_error("65536", "PORT"), "out-of-range PORT must fail");
+    VP_EXPECT(throws_config_error("-1", "PORT"), "negative PORT must fail");
 
     // --- Limite de corpo: uma requisicao nao derruba o processo -------------
     {

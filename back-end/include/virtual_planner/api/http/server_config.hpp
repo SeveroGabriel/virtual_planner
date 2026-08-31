@@ -25,13 +25,14 @@ struct ServerConfig
     // origem — util para experimentar, ruim para producao.
     std::vector<std::string> allowed_origins{"http://localhost:5173"};
 
-    // Le `VP_HTTP_HOST`, `VP_HTTP_PORT` e `VP_HTTP_ALLOWED_ORIGINS`, caindo
+    // Le `VP_HTTP_HOST`, `VP_HTTP_PORT`, `PORT` e `VP_HTTP_ALLOWED_ORIGINS`, caindo
     // nos valores acima quando a variavel nao existe ou esta vazia.
     //
+    // Porta: VP_HTTP_PORT nao vazio > PORT nao vazio > 8080.
     // `VP_HTTP_ALLOWED_ORIGINS` e uma lista separada por virgula; espacos ao
     // redor de cada item sao ignorados.
     //
-    // Lanca `shared::ConfigError` quando `VP_HTTP_PORT` nao e um inteiro
+    // Lanca `shared::ConfigError` quando a porta escolhida nao e um inteiro
     // entre 0 e 65535. A porta 0 e valida e pede uma porta efemera ao
     // sistema operacional — e assim que os testes sobem o servidor sem
     // disputar uma porta fixa.
